@@ -1,0 +1,22 @@
+:root {
+  color-scheme: dark light;
+  --bg: #16181d;
+  --fg: #e8e6e1;
+}
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #f5f2ec;
+    --fg: #1d1f24;
+  }
+}
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: system-ui, sans-serif;
+}
+.placeholder {
+  max-width: 40rem;
+  margin: 4rem auto;
+  padding: 0 1rem;
+}
