@@ -8,6 +8,8 @@ interface Props {
   centres: readonly number[];
   spaces: readonly number[];
   leftHanded: boolean;
+  /** Called on press with the string (0 = lowest) and fret (0 = open). */
+  onPlay?: (string: number, fret: number) => void;
 }
 
 /** Font size that keeps 1–3 character labels (F, F♯, F𝄪) inside a marker of radius r. */
@@ -22,9 +24,20 @@ export const NoteMarkers = memo(function NoteMarkers({
   centres,
   spaces,
   leftHanded,
+  onPlay,
 }: Props) {
   return (
-    <g textAnchor="middle" dominantBaseline="central" fontFamily="system-ui, sans-serif">
+    <g
+      textAnchor="middle"
+      dominantBaseline="central"
+      fontFamily="system-ui, sans-serif"
+      className="markers"
+      onPointerDown={(e) => {
+        const target = (e.target as Element).closest<SVGGElement>('[data-string]');
+        if (!target || !onPlay) return;
+        onPlay(Number(target.dataset.string), Number(target.dataset.fret));
+      }}
+    >
       {board.flatMap((row) =>
         row.map((cell) => {
           const r = markerRadius(spaces[cell.fret] as number);

@@ -1,6 +1,7 @@
 import { MAX_FRETS, MIN_FRETS, useStore, type FretSpacing } from '../../state/store';
 import { getPreset, PRESET_GROUPS } from '../../theory/tunings';
 import { midiToName } from '../../theory/notes';
+import { SoundControls } from './SoundControls';
 
 const CUSTOM = 'custom';
 const fretOptions = Array.from({ length: MAX_FRETS - MIN_FRETS + 1 }, (_, i) => MIN_FRETS + i);
@@ -72,6 +73,8 @@ export function Toolbar() {
           <option value="flat">♭ Flats</option>
         </select>
       </label>
+
+      <SoundControls />
 
       <label className="check">
         <input

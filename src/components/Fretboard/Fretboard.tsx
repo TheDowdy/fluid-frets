@@ -1,4 +1,5 @@
-import { useMemo, useRef } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
+import { audioEngine } from '../../audio/engine';
 import { useElementWidth } from '../../hooks/useElementWidth';
 import { useStore } from '../../state/store';
 import { buildFretboard } from '../../theory/fretboard';
@@ -38,6 +39,14 @@ export function Fretboard() {
     [tuning.strings, fretCount, pref],
   );
 
+  const play = useCallback(
+    (string: number, fret: number) => {
+      const open = tuning.strings[string];
+      if (open !== undefined) audioEngine.pluck(string, open + fret);
+    },
+    [tuning.strings],
+  );
+
   // Board graphics are drawn right-handed and flipped as a group; text is positioned
   // with mirrored coordinates so it never appears mirrored.
   const flip = leftHanded ? `translate(${totalWidth} 0) scale(-1 1)` : undefined;
@@ -58,7 +67,13 @@ export function Fretboard() {
             <Frets wires={wires} />
             <Strings />
           </g>
-          <NoteMarkers board={board} centres={centres} spaces={spaces} leftHanded={leftHanded} />
+          <NoteMarkers
+            board={board}
+            centres={centres}
+            spaces={spaces}
+            leftHanded={leftHanded}
+            onPlay={play}
+          />
           <g
             textAnchor="middle"
             fontFamily="system-ui, sans-serif"

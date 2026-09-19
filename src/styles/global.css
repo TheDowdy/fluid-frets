@@ -134,3 +134,50 @@ body {
     padding: 0.5rem;
   }
 }
+
+/* Controls added in Phase 3 */
+.field.volume input {
+  width: 8rem;
+  min-height: 40px;
+  accent-color: var(--accent);
+}
+.button {
+  min-height: 40px;
+  padding: 0 0.9rem;
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--fg);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+}
+.button[aria-pressed='true'] {
+  background: var(--accent);
+  color: #1a1206;
+  border-color: var(--accent);
+}
+.banner {
+  display: block;
+  width: 100%;
+  padding: 0.6rem 1rem;
+  font: inherit;
+  font-size: 0.95rem;
+  text-align: center;
+  color: #1a1206;
+  background: var(--accent);
+  border: 0;
+  cursor: pointer;
+}
+.banner small {
+  opacity: 0.8;
+}
+.banner-error {
+  cursor: default;
+  color: #fff;
+  background: #a33;
+}
+.markers {
+  cursor: pointer;
+  touch-action: manipulation;
+}
