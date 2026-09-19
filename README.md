@@ -3,7 +3,7 @@
 A web app for finding and hearing chords and scales in alternate guitar tunings. See
 [PLAN.md](./PLAN.md) for the full build plan and phase list.
 
-**Status:** Phase 0 (scaffold) and Phase 1 (theory core) complete.
+**Status:** Phases 0–2 complete (scaffold, theory core, static fretboard).
 
 ## Run it
 

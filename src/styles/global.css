@@ -2,12 +2,22 @@
   color-scheme: dark light;
   --bg: #16181d;
   --fg: #e8e6e1;
+  --panel: #20242b;
+  --border: #3a404a;
+  --accent: #e0a458;
 }
 @media (prefers-color-scheme: light) {
   :root {
     --bg: #f5f2ec;
     --fg: #1d1f24;
+    --panel: #e9e4da;
+    --border: #c8c0b0;
+    --accent: #a8641a;
   }
+}
+
+* {
+  box-sizing: border-box;
 }
 body {
   margin: 0;
@@ -15,8 +25,112 @@ body {
   color: var(--fg);
   font-family: system-ui, sans-serif;
 }
-.placeholder {
-  max-width: 40rem;
-  margin: 4rem auto;
-  padding: 0 1rem;
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.app {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Toolbar */
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.5rem 1rem;
+  padding: 0.5rem 1rem;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+}
+.toolbar-title {
+  font-size: 1.15rem;
+  margin: 0 0.5rem 0 0;
+  align-self: center;
+}
+.field {
+  min-width: 0;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  font-size: 0.75rem;
+}
+.field select {
+  max-width: 100%;
+  min-height: 40px;
+  font: inherit;
+  font-size: 0.9rem;
+  padding: 0 0.5rem;
+  color: var(--fg);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+.check {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 40px;
+  font-size: 0.9rem;
+}
+.check input {
+  width: 20px;
+  height: 20px;
+}
+
+/* Fretboard */
+.stage {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+.stage {
+  min-width: 0;
+}
+.fretboard {
+  width: 100%;
+  min-width: 0;
+  max-width: 1700px;
+}
+.fretboard-scroll {
+  overflow-x: auto;
+}
+.fretboard-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.rotate-hint {
+  display: none;
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
+  opacity: 0.75;
+  text-align: center;
+}
+/* Phone in portrait: scroll the neck horizontally and suggest rotating. */
+@media (max-width: 600px) and (orientation: portrait) {
+  .fretboard-svg {
+    min-width: 900px;
+  }
+  .rotate-hint {
+    display: block;
+  }
+}
+/* Phone in landscape: tighten chrome so the neck gets the space. */
+@media (max-height: 500px) {
+  .toolbar {
+    padding: 0.25rem 0.75rem;
+  }
+  .stage {
+    padding: 0.5rem;
+  }
 }
