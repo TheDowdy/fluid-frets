@@ -2,8 +2,8 @@ import { useCallback, useMemo, useRef } from 'react';
 import { audioEngine } from '../../audio/engine';
 import { useElementWidth } from '../../hooks/useElementWidth';
 import { useStore } from '../../state/store';
-import { buildFretboard } from '../../theory/fretboard';
 import { chromaticSpelling } from '../../theory/notes';
+import { TuningPeg } from '../TuningPeg/TuningPeg';
 import { Frets } from './Frets';
 import {
   boardHeight,
@@ -11,6 +11,7 @@ import {
   fretSpaceWidths,
   fretWireXs,
   mirrorX,
+  STRING_COUNT,
   totalHeight,
   totalWidth,
   shouldUseRealisticSpacing,
@@ -34,10 +35,7 @@ export function Fretboard() {
   const wires = useMemo(() => fretWireXs(fretCount, realistic), [fretCount, realistic]);
   const centres = useMemo(() => fretCentreXs(wires), [wires]);
   const spaces = useMemo(() => fretSpaceWidths(wires), [wires]);
-  const board = useMemo(
-    () => buildFretboard(tuning.strings, fretCount, { spelling: chromaticSpelling(pref) }),
-    [tuning.strings, fretCount, pref],
-  );
+  const spelling = useMemo(() => chromaticSpelling(pref), [pref]);
 
   const play = useCallback(
     (string: number, fret: number) => {
@@ -68,12 +66,16 @@ export function Fretboard() {
             <Strings />
           </g>
           <NoteMarkers
-            board={board}
+            fretCount={fretCount}
+            spelling={spelling}
             centres={centres}
             spaces={spaces}
             leftHanded={leftHanded}
             onPlay={play}
           />
+          {Array.from({ length: STRING_COUNT }, (_, i) => (
+            <TuningPeg key={i} string={i} leftHanded={leftHanded} />
+          ))}
           <g
             textAnchor="middle"
             fontFamily="system-ui, sans-serif"

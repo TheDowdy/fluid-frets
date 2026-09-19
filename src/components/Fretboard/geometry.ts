@@ -90,3 +90,40 @@ export function shouldUseRealisticSpacing(
   if (setting === 'even') return false;
   return containerWidth >= 900;
 }
+
+/**
+ * Value at a fractional fret position, linearly interpolated between the per-fret `values`
+ * (index 0 = open slot). Outside 0…N it extends along the end slopes, so a label sliding past
+ * the nut or the last fret keeps moving smoothly. Used for x-centres.
+ */
+export function interpolateAtFret(values: readonly number[], fret: number): number {
+  const last = values.length - 1;
+  if (fret <= 0) {
+    const slope = (values[1] as number) - (values[0] as number);
+    return (values[0] as number) + fret * slope;
+  }
+  if (fret >= last) {
+    const slope = (values[last] as number) - (values[last - 1] as number);
+    return (values[last] as number) + (fret - last) * slope;
+  }
+  const lo = Math.floor(fret);
+  const t = fret - lo;
+  return (values[lo] as number) * (1 - t) + (values[lo + 1] as number) * t;
+}
+
+/** Like interpolateAtFret but holds the end values instead of extending (used for sizes). */
+export function interpolateClamped(values: readonly number[], fret: number): number {
+  const last = values.length - 1;
+  if (fret <= 0) return values[0] as number;
+  if (fret >= last) return values[last] as number;
+  const lo = Math.floor(fret);
+  const t = fret - lo;
+  return (values[lo] as number) * (1 - t) + (values[lo + 1] as number) * t;
+}
+
+/** Layout of the tuning peg for each string (drawn in the headstock, left of the open-note slot). */
+export const PEG = {
+  x: 6,
+  width: 70,
+  height: LAYOUT.stringGap - 3,
+} as const;

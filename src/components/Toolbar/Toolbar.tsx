@@ -1,21 +1,29 @@
+import { useState } from 'react';
 import { MAX_FRETS, MIN_FRETS, useStore, type FretSpacing } from '../../state/store';
-import { getPreset, PRESET_GROUPS } from '../../theory/tunings';
+import { selectTuning } from '../../state/tuningActions';
 import { midiToName } from '../../theory/notes';
+import { CUSTOM_ID } from '../../theory/savedTunings';
+import { getPreset, PRESET_GROUPS } from '../../theory/tunings';
+import { SaveTuningDialog } from './SaveTuningDialog';
+import { SettingsDialog } from './SettingsDialog';
 import { SoundControls } from './SoundControls';
 
-const CUSTOM = 'custom';
 const fretOptions = Array.from({ length: MAX_FRETS - MIN_FRETS + 1 }, (_, i) => MIN_FRETS + i);
 
 export function Toolbar() {
   const tuning = useStore((s) => s.tuning);
+  const saved = useStore((s) => s.savedTunings);
   const fretCount = useStore((s) => s.fretCount);
   const pref = useStore((s) => s.accidentalPref);
   const leftHanded = useStore((s) => s.leftHanded);
   const fretSpacing = useStore((s) => s.fretSpacing);
-  const { setTuning, setFretCount, setAccidentalPref, setLeftHanded, setFretSpacing } =
-    useStore.getState();
+  const { setFretCount, setAccidentalPref, setLeftHanded, setFretSpacing } = useStore.getState();
+  const [saving, setSaving] = useState(false);
+  const [settings, setSettings] = useState(false);
 
   const isPreset = getPreset(tuning.id) !== undefined;
+  const isSaved = saved.some((t) => t.id === tuning.id);
+  const notes = (strings: readonly number[]) => strings.map((m) => midiToName(m, pref)).join(' ');
 
   return (
     <header className="toolbar">
@@ -24,24 +32,39 @@ export function Toolbar() {
       <label className="field">
         <span>Tuning</span>
         <select
-          value={isPreset ? tuning.id : CUSTOM}
+          value={isPreset || isSaved ? tuning.id : CUSTOM_ID}
           onChange={(e) => {
-            const preset = getPreset(e.target.value);
-            if (preset) setTuning(preset);
+            const chosen = getPreset(e.target.value) ?? saved.find((t) => t.id === e.target.value);
+            if (chosen) selectTuning(chosen);
           }}
         >
-          {!isPreset && <option value={CUSTOM}>Custom</option>}
+          {!isPreset && !isSaved && (
+            <option value={CUSTOM_ID}>Custom — {notes(tuning.strings)}</option>
+          )}
           {PRESET_GROUPS.map((g) => (
             <optgroup key={g.group} label={g.group}>
               {g.tunings.map((t) => (
                 <option key={t.id} value={t.id}>
-                  {t.name} — {t.strings.map((m) => midiToName(m, pref)).join(' ')}
+                  {t.name} — {notes(t.strings)}
                 </option>
               ))}
             </optgroup>
           ))}
+          {saved.length > 0 && (
+            <optgroup label="My tunings">
+              {saved.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name} — {notes(t.strings)}
+                </option>
+              ))}
+            </optgroup>
+          )}
         </select>
       </label>
+
+      <button type="button" className="button" onClick={() => setSaving(true)}>
+        Save tuning
+      </button>
 
       <label className="field">
         <span>Frets</span>
@@ -84,6 +107,13 @@ export function Toolbar() {
         />
         <span>Left-handed</span>
       </label>
+
+      <button type="button" className="button" onClick={() => setSettings(true)}>
+        Settings
+      </button>
+
+      <SaveTuningDialog open={saving} onClose={() => setSaving(false)} />
+      <SettingsDialog open={settings} onClose={() => setSettings(false)} />
     </header>
   );
 }

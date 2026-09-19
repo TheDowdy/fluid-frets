@@ -77,3 +77,34 @@ export function buildFretboard(
     }),
   );
 }
+
+/** A note that should be drawn on a string, at a (possibly fractional) fret position. */
+export interface SlidingNote {
+  midi: MidiNote;
+  /** Fret position = midi − string pitch. Fractional while a peg is turning. */
+  fret: number;
+}
+
+const EDGE_MARGIN = 0.5;
+
+/**
+ * The notes visible on a string whose current pitch is `pitch` (fractional during a peg drag).
+ * A note of MIDI value m sits at fret f = m − pitch, so as the pitch changes every label slides
+ * along the neck, and new ones slide in from the edges (PLAN.md §4).
+ * Includes notes up to half a fret beyond either end so they can fade in and out.
+ */
+export function slidingNotes(pitch: number, fretCount: number): SlidingNote[] {
+  const eps = 1e-9;
+  const first = Math.ceil(pitch - EDGE_MARGIN - eps);
+  const last = Math.floor(pitch + fretCount + EDGE_MARGIN + eps);
+  const notes: SlidingNote[] = [];
+  for (let midi = first; midi <= last; midi++) notes.push({ midi, fret: midi - pitch });
+  return notes;
+}
+
+/** 1 inside the neck, fading to 0 over half a fret beyond either end. */
+export function edgeOpacity(fret: number, fretCount: number): number {
+  if (fret < 0) return Math.max(0, 1 + fret / EDGE_MARGIN);
+  if (fret > fretCount) return Math.max(0, 1 - (fret - fretCount) / EDGE_MARGIN);
+  return 1;
+}

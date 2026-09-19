@@ -175,6 +175,24 @@ export class AudioEngine {
     return instrument.pluck(string, midi, { when: this.ctx?.currentTime, ...opts });
   }
 
+  /**
+   * Plays several notes spaced `spacing` seconds apart on the audio clock (a strum or arpeggio),
+   * in the order given. Unlocks audio first, like `pluck`.
+   */
+  pluckMany(
+    notes: readonly { string: number; midi: number }[],
+    opts: { velocity?: number; spacing?: number } = {},
+  ): void {
+    this.unlock();
+    const instrument = this.instrument;
+    if (!instrument) return;
+    const start = (this.ctx?.currentTime ?? 0) + 0.02;
+    const spacing = opts.spacing ?? 0.03;
+    notes.forEach(({ string, midi }, i) => {
+      instrument.pluck(string, midi, { velocity: opts.velocity ?? 0.6, when: start + i * spacing });
+    });
+  }
+
   setPitch(voice: VoiceHandle, midi: number, rampMs?: number): void {
     this.instrument?.setPitch(voice, midi, rampMs);
   }

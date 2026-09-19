@@ -14,6 +14,17 @@ export function Neck() {
           <stop offset="0" stopColor={skin.headstock[0]} />
           <stop offset="1" stopColor={skin.headstock[1]} />
         </linearGradient>
+        <linearGradient id="fs-drum" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#1b1b1e" />
+          <stop offset="0.5" stopColor="#3a3a40" />
+          <stop offset="1" stopColor="#1b1b1e" />
+        </linearGradient>
+        <linearGradient id="fs-drum-shade" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#000" stopOpacity="0.55" />
+          <stop offset="0.3" stopColor="#000" stopOpacity="0" />
+          <stop offset="0.7" stopColor="#000" stopOpacity="0" />
+          <stop offset="1" stopColor="#000" stopOpacity="0.55" />
+        </linearGradient>
         {/* Subtle horizontal grain: stretched turbulence, kept faint. */}
         <filter id="fs-grain" x="0" y="0" width="100%" height="100%">
           <feTurbulence type="fractalNoise" baseFrequency="0.004 0.35" numOctaves="2" seed="7" />

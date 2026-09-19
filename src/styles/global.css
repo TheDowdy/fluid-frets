@@ -128,7 +128,34 @@ body {
 /* Phone in landscape: tighten chrome so the neck gets the space. */
 @media (max-height: 500px) {
   .toolbar {
+    gap: 0.25rem 0.5rem;
     padding: 0.25rem 0.75rem;
+  }
+  .toolbar-title {
+    font-size: 1rem;
+  }
+  /* Labels stay available to screen readers but stop costing a row of height. */
+  .toolbar .field > span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .toolbar .field select,
+  .toolbar .button {
+    font-size: 0.8rem;
+  }
+  .toolbar .field.volume input {
+    width: 5rem;
+  }
+  .banner {
+    padding: 0.3rem 0.75rem;
+    font-size: 0.85rem;
+  }
+  .banner small {
+    display: none;
   }
   .stage {
     padding: 0.5rem;
@@ -180,4 +207,100 @@ body {
 .markers {
   cursor: pointer;
   touch-action: manipulation;
+}
+
+/* Tuning pegs (Phase 4) */
+.peg {
+  cursor: ns-resize;
+  touch-action: none;
+  outline: none;
+}
+.peg .peg-focus {
+  stroke: transparent;
+}
+.peg:focus-visible .peg-focus {
+  stroke: var(--accent);
+  stroke-width: 2.5;
+}
+
+/* Dialogs and text inputs (Phase 4) */
+.dialog {
+  width: min(32rem, calc(100vw - 2rem));
+  max-height: calc(100dvh - 2rem);
+  padding: 0;
+  color: var(--fg);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.dialog::backdrop {
+  background: rgba(0, 0, 0, 0.55);
+}
+.dialog-body {
+  padding: 1rem 1.25rem 1.25rem;
+}
+.dialog-title {
+  margin: 0 0 0.75rem;
+  font-size: 1.15rem;
+}
+.dialog-subtitle {
+  margin: 1.25rem 0 0.5rem;
+  font-size: 1rem;
+}
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+.dialog-actions.start {
+  justify-content: flex-start;
+}
+.dialog-warning {
+  margin: 0.75rem 0 0;
+  color: #e06c5a;
+}
+.muted {
+  opacity: 0.75;
+  font-size: 0.85rem;
+}
+.text-input {
+  min-height: 40px;
+  width: 100%;
+  padding: 0 0.6rem;
+  font: inherit;
+  color: var(--fg);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+.button.primary {
+  color: #1a1206;
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.button.danger {
+  color: #e06c5a;
+}
+.button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.tuning-list {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.tuning-list li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
+  align-items: center;
+  gap: 0.4rem;
+}
+.tuning-list .notes {
+  grid-column: 1 / -1;
+  order: 5;
+  margin-top: -0.25rem;
 }

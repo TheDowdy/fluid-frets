@@ -13,6 +13,10 @@ page.on('pageerror', (e) => errors.push(e.message));
 page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
 await page.goto(url);
 
+// Choosing a tuning strums the open strings (Phase 4); switch that off so it can't colour the pitch
+// measurements below, which look at one string at a time.
+await page.evaluate(() => window.__fretscape.store.getState().setStrumOnTuningChange(false));
+
 const status = () => page.evaluate(() => window.__fretscape.audioEngine.getStatus());
 const peak = () => page.evaluate(() => window.__fretscape.audioEngine.getOutputPeak());
 const marker = (string, fret) => page.locator(`[data-string="${string}"][data-fret="${fret}"]`);
@@ -90,6 +94,7 @@ check(
 
 // Retuning: switch to Drop D → low string open is D2 (73.4 Hz).
 await page.locator('select').first().selectOption('drop-d');
+await page.waitForTimeout(500); // let the 300 ms label slide finish before targeting markers
 m = await measure(0, 0, 73.42);
 check(
   'Drop D: open low string plays D2 (73.4 Hz)',
@@ -97,6 +102,7 @@ check(
   `${m.hz.toFixed(2)} Hz`,
 );
 await page.locator('select').first().selectOption('standard');
+await page.waitForTimeout(500);
 
 // Mute.
 await page.getByRole('button', { name: 'Mute' }).click();
