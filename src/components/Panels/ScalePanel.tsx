@@ -1,5 +1,6 @@
 import { useId } from 'react';
 import { useScaleView } from '../../hooks/useScaleView';
+import { describeChord } from '../../theory/chords';
 import { playScale, stopScale } from '../../state/scalePlayback';
 import { useStore } from '../../state/store';
 import { chromaticName, formatNoteName, noteNamePc } from '../../theory/notes';
@@ -19,9 +20,14 @@ import {
 import { getScale, SCALES } from '../../theory/scales';
 
 const encodeOverlay = (o: Overlay): string =>
-  o.kind === 'none' ? 'none' : o.kind === 'scale' ? `scale:${o.scaleId}` : `${o.kind}:${o.degree}`;
+  o.kind === 'none' || o.kind === 'chord'
+    ? o.kind
+    : o.kind === 'scale'
+      ? `scale:${o.scaleId}`
+      : `${o.kind}:${o.degree}`;
 
 function decodeOverlay(value: string): Overlay {
+  if (value === 'chord') return { kind: 'chord' };
   const [kind, arg] = value.split(':');
   if (kind === 'scale' && arg) return { kind, scaleId: arg };
   if ((kind === 'triad' || kind === 'seventh') && arg !== undefined) {
@@ -37,6 +43,8 @@ export function ScalePanel() {
   const playing = useStore((s) => s.playing);
   const pref = useStore((s) => s.accidentalPref);
   const fretCount = useStore((s) => s.fretCount);
+  const chordSpec = useStore((s) => s.chordSpec);
+  const chordName = describeChord(chordSpec, pref).name;
   const { setScaleSettings, setPlayback } = useStore.getState();
   const vm = useScaleView();
   const id = useId();
@@ -102,6 +110,9 @@ export function ScalePanel() {
             onChange={(e) => setScaleSettings({ overlay: decodeOverlay(e.target.value) })}
           >
             <option value="none">None</option>
+            <option value="chord">
+              Chord from the Chords tab{chordName ? ` (${chordName})` : ''}
+            </option>
             {chordsOk && triads && sevenths ? (
               <>
                 <optgroup label="Diatonic triads">

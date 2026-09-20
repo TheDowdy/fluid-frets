@@ -419,3 +419,155 @@ body {
     padding: 0.25rem 0.75rem 0.5rem;
   }
 }
+
+/* Chords tab (Phase 7) */
+.chord-panel {
+  max-height: 55vh;
+  overflow-y: auto;
+}
+.chip-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  border: 0;
+}
+.chip-group legend {
+  float: left;
+  min-width: 6rem;
+  margin: 0 0.5rem 0 0;
+  padding: 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 40px;
+}
+.chip {
+  min-height: 40px;
+  min-width: 40px;
+  padding: 0 0.8rem;
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--fg);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  cursor: pointer;
+}
+.chip[aria-pressed='true'] {
+  color: #1a1206;
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.chip.unavailable {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.chip-message {
+  min-height: 1.4em;
+  margin: 0.25rem 0 0;
+  font-size: 0.85rem;
+  color: var(--accent);
+}
+.chord-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 1.5rem;
+  margin-top: 0.25rem;
+}
+.chord-summary p {
+  margin: 0;
+}
+.chord-name {
+  margin: 0;
+  font-size: 1.8rem;
+}
+.display-options {
+  margin-top: 0.5rem;
+}
+.voicing-card {
+  margin-top: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  touch-action: pan-y;
+}
+.voicing-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+.voicing-status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.shape-text {
+  font-family: ui-monospace, monospace;
+  font-size: 1.05rem;
+  letter-spacing: 0.04em;
+}
+.shape-reading {
+  margin: 0.4rem 0;
+  text-align: center;
+}
+.play-row {
+  justify-content: center;
+}
+.hint {
+  margin: 0.5rem 0 0;
+  font-size: 0.8rem;
+}
+.rules {
+  margin-top: 0.75rem;
+}
+.rules summary {
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+.voicing-list {
+  display: flex;
+  gap: 0.4rem;
+  margin: 0.75rem 0 0;
+  padding: 0 0 0.5rem;
+  list-style: none;
+  overflow-x: auto;
+}
+.voicing-thumb {
+  padding: 0.25rem;
+  color: var(--fg);
+  background: var(--bg);
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+}
+.voicing-thumb[aria-pressed='true'] {
+  border-color: var(--accent);
+}
+.chord-diagram {
+  display: block;
+}
+.diagram-dot {
+  fill: var(--fg);
+}
+.diagram-dot.root {
+  fill: var(--accent);
+}
+
+.builder-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 0 1.5rem;
+}
+
+.diagram-placeholder {
+  display: block;
+  width: 73px;
+  height: 84px;
+}

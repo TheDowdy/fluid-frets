@@ -19,6 +19,8 @@ export const skin = {
   /** Overlay ring: light line over a dark halo so it reads on both wood and coloured markers. */
   ring: '#ffffff',
   ringHalo: 'rgba(0,0,0,0.7)',
+  /** The ✕ shown behind the nut for a muted string. */
+  mutedMark: '#e8e6e1',
   /** Outline of the marker being sounded by scale playback. */
   playhead: '#ffd23f',
   fretNumber: 'currentColor',

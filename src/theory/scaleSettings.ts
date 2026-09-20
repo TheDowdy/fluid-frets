@@ -50,6 +50,7 @@ const oneOf = <T extends string>(x: unknown, values: readonly T[], fallback: T):
 
 export function sanitizeOverlay(x: unknown): Overlay {
   if (!isRecord(x)) return NO_OVERLAY;
+  if (x['kind'] === 'chord') return { kind: 'chord' };
   if (x['kind'] === 'scale' && SCALES.some((s) => s.id === x['scaleId'])) {
     return { kind: 'scale', scaleId: x['scaleId'] as string };
   }

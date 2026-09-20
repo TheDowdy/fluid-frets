@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
-import { useScaleView, type ScaleViewModel } from '../../hooks/useScaleView';
-import { formatNoteName, noteNamePc } from '../../theory/notes';
+import { useDisplay } from '../../hooks/useDisplay';
+import type { DisplayModel } from '../../hooks/useScaleView';
 import { markerStyle, type MarkerStyle, type ScaleStyleOptions } from '../Fretboard/markerStyle';
 import { skin } from '../Fretboard/skin';
 
@@ -56,72 +56,55 @@ function RingSwatch() {
   );
 }
 
-function options(vm: ScaleViewModel): ScaleStyleOptions {
+function options(d: DisplayModel): ScaleStyleOptions {
   return {
-    colourMode: vm.colourMode,
-    palette: vm.palette,
+    colourMode: d.colourMode,
+    palette: d.palette,
     hideOutOfScale: false,
-    chromatic: !!vm.def.chromatic,
+    chromatic: d.chromatic,
   };
 }
 
-/** Under the neck: what each marker style means. Shown only in scale mode. */
+/** Under the neck: what each marker style means. Shown in scale and chord modes. */
 export function Legend() {
-  const vm = useScaleView();
-  if (!vm) return null;
-  const opts = options(vm);
-  const rootPc = noteNamePc(vm.root);
+  const display = useDisplay();
+  if (!display) return null;
+  const opts = options(display);
+  const { items, terms, overlayLabel } = display.legend;
+  const plain = (role: 'tonic' | 'scale' | 'out', interval: number) =>
+    markerStyle({ role, interval, variant: false, overlay: false }, opts);
 
   return (
     <div className="legend" aria-label="Legend">
-      {vm.colourMode ? (
+      {display.colourMode ? (
         <ul className="legend-list">
-          {vm.def.degrees.map((d) => {
-            const pc = (rootPc + d.interval) % 12;
-            const style = markerStyle(vm.views[pc], opts);
-            return (
-              <li key={d.interval} data-degree={d.label}>
-                <Swatch style={style}>{d.label}</Swatch>
-                <span className="legend-note">{formatNoteName(vm.spelling[pc]!)}</span>
-              </li>
-            );
-          })}
+          {items.map((item) => (
+            <li key={item.label + item.note} data-degree={item.label}>
+              <Swatch style={markerStyle(item.view, opts)}>{item.label}</Swatch>
+              <span className="legend-note">{item.note}</span>
+            </li>
+          ))}
         </ul>
       ) : (
         <ul className="legend-list">
           <li>
-            <Swatch
-              style={markerStyle(
-                { role: 'tonic', interval: 0, variant: false, overlay: false },
-                opts,
-              )}
-            />
-            <span>Tonic</span>
+            <Swatch style={plain('tonic', 0)} />
+            <span>{terms.tonic}</span>
           </li>
           <li>
-            <Swatch
-              style={markerStyle(
-                { role: 'scale', interval: 7, variant: false, overlay: false },
-                opts,
-              )}
-            />
-            <span>In scale</span>
+            <Swatch style={plain('scale', 7)} />
+            <span>{terms.scale}</span>
           </li>
           <li>
-            <Swatch
-              style={markerStyle(
-                { role: 'out', interval: 1, variant: false, overlay: false },
-                opts,
-              )}
-            />
-            <span>{vm.hideOutOfScale ? 'Out of scale (hidden)' : 'Out of scale'}</span>
+            <Swatch style={plain('out', 1)} />
+            <span>{display.hideOutOfScale ? `${terms.out} (hidden)` : terms.out}</span>
           </li>
         </ul>
       )}
-      {vm.overlayLabel && (
+      {overlayLabel && (
         <p className="legend-overlay">
           <RingSwatch />
-          <span>Ring: {vm.overlayLabel}</span>
+          <span>Ring: {overlayLabel}</span>
         </p>
       )}
     </div>

@@ -7,6 +7,8 @@ export interface SequenceStep {
   midi: number;
   fret: number;
   velocity?: number;
+  /** 0–1: a brighter attack (upstrokes). */
+  brightness?: number;
 }
 
 export interface SequenceHooks {
@@ -60,6 +62,7 @@ export class SequencePlayer {
         const when = t0 + nextToSound * intervalSeconds;
         const voice = audioEngine.pluck(step.string, step.midi, {
           velocity: step.velocity ?? 0.75,
+          ...(step.brightness !== undefined ? { brightness: step.brightness } : {}),
           when,
         });
         this.scheduled.push({ voice, when });

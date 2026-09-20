@@ -1,11 +1,14 @@
 import { useState } from 'react';
+import { stopChordPlayback } from '../../state/chordActions';
 import { stopScale } from '../../state/scalePlayback';
 import { useStore, type AppMode } from '../../state/store';
+import { ChordPanel } from './ChordPanel';
 import { ScalePanel } from './ScalePanel';
 
 const TABS: { mode: AppMode; label: string }[] = [
   { mode: 'explore', label: 'Explore' },
   { mode: 'scale', label: 'Scales' },
+  { mode: 'chord', label: 'Chords' },
 ];
 
 /** Phones in landscape have little height, so start with the panel folded away there. */
@@ -13,8 +16,8 @@ const startsCollapsed = () =>
   typeof matchMedia === 'function' && matchMedia('(max-height: 500px)').matches;
 
 /**
- * The tabbed panel under the neck (§13): Explore (chromatic) and Scales for now; Chords and
- * Identify join in later phases. It folds away to give the neck the whole screen.
+ * The tabbed panel under the neck (§13): Explore (chromatic), Scales and Chords; Identify joins in
+ * a later phase. It folds away to give the neck the whole screen.
  */
 export function BottomPanel() {
   const mode = useStore((s) => s.mode);
@@ -23,6 +26,7 @@ export function BottomPanel() {
   const choose = (next: AppMode) => {
     if (next === mode) return;
     stopScale();
+    stopChordPlayback();
     useStore.getState().setMode(next);
     setCollapsed(false);
   };
@@ -70,6 +74,8 @@ export function BottomPanel() {
       <div id="panel-body" role="tabpanel" aria-labelledby={`tab-${mode}`} hidden={collapsed}>
         {mode === 'scale' ? (
           <ScalePanel />
+        ) : mode === 'chord' ? (
+          <ChordPanel />
         ) : (
           <p className="panel-body muted">
             Every note in the current tuning. Tap a note to hear it, drag across the strings to

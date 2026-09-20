@@ -1,5 +1,5 @@
 import { memo, useEffect, useRef } from 'react';
-import type { ScaleViewModel } from '../../hooks/useScaleView';
+import type { DisplayModel } from '../../hooks/useScaleView';
 import { onPluck } from '../../state/pluckEvents';
 import { useStore } from '../../state/store';
 import { edgeOpacity, slidingNotes } from '../../theory/fretboard';
@@ -24,7 +24,7 @@ interface StringProps {
   spelling: Spelling;
   leftHanded: boolean;
   /** Null in explore mode. */
-  scale: ScaleViewModel | null;
+  display: DisplayModel | null;
 }
 
 /** Font size that keeps 1–3 character labels (F, F♯, F𝄪) inside a marker of radius r. */
@@ -50,32 +50,57 @@ const StringMarkers = memo(function StringMarkers({
   spaces,
   spelling,
   leftHanded,
-  scale,
+  display,
 }: StringProps) {
   const pitch = useStore((s) => s.liveTuning[string]) ?? 40;
   // The fret being sounded by scale playback on this string, if any (one string re-renders per step).
   const playheadFret = useStore((s) => (s.playhead?.string === string ? s.playhead.fret : null));
   const cy = stringY(string);
-  const styleOptions: ScaleStyleOptions | null = scale && {
-    colourMode: scale.colourMode,
-    palette: scale.palette,
-    hideOutOfScale: scale.hideOutOfScale,
-    chromatic: !!scale.def.chromatic,
+  const styleOptions: ScaleStyleOptions | null = display && {
+    colourMode: display.colourMode,
+    palette: display.palette,
+    hideOutOfScale: display.hideOutOfScale,
+    chromatic: display.chromatic,
   };
+  // undefined: no fingering to show; null: this string is muted; number: the fret being played.
+  const shapeFret = display?.shape ? (display.shape[string] ?? null) : undefined;
 
   return (
     <g>
       {slidingNotes(pitch, fretCount).map(({ midi, fret }) => {
         const edge = edgeOpacity(fret, fretCount);
         if (edge <= 0) return null;
-        const view = scale?.views[pitchClass(midi)];
-        const style = markerStyle(view, styleOptions);
-        if (!style.visible) return null;
-        const label = formatNoteName(spelling[pitchClass(midi)] as (typeof spelling)[number]);
-        const r = markerRadius(interpolateClamped(spaces, fret)) * style.scale;
-        const cx = mirrorX(interpolateAtFret(centres, fret), leftHanded);
+        const pc = pitchClass(midi);
         // Only a marker sitting exactly on a fret is a tap target (always true at rest).
         const onFret = Math.abs(fret - Math.round(fret)) < 1e-6 && fret >= 0 && fret <= fretCount;
+        // A note in the fingering gets the overlay ring whatever its role, and is never hidden.
+        const inShape = onFret && shapeFret === Math.round(fret);
+        const baseView = display?.views[pc];
+        const view = inShape && baseView ? { ...baseView, overlay: true } : baseView;
+        const style = markerStyle(view, styleOptions);
+        if (!style.visible) return null;
+        const label =
+          display?.labels?.[pc] ?? formatNoteName(spelling[pc] as (typeof spelling)[number]);
+        const r = markerRadius(interpolateClamped(spaces, fret)) * style.scale;
+        const cx = mirrorX(interpolateAtFret(centres, fret), leftHanded);
+        // A string muted in the fingering shows ✕ in its open-note slot instead of a note.
+        if (onFret && Math.round(fret) === 0 && shapeFret === null) {
+          return (
+            <g key={midi} opacity={edge} data-string={string} data-fret={0} data-muted="">
+              <circle
+                cx={cx}
+                cy={cy}
+                r={r}
+                fill="transparent"
+                stroke="none"
+                className="marker-dot"
+              />
+              <text x={cx} y={cy} fontSize={r * 1.3} fontWeight={700} fill={skin.mutedMark}>
+                ✕
+              </text>
+            </g>
+          );
+        }
         const sounding = onFret && playheadFret === Math.round(fret);
         return (
           <g
@@ -84,9 +109,10 @@ const StringMarkers = memo(function StringMarkers({
             data-string={onFret ? string : undefined}
             data-fret={onFret ? Math.round(fret) : undefined}
             data-midi={midi}
-            data-role={view?.role}
-            data-degree={view?.degree?.label}
-            data-overlay={view?.overlay ? '' : undefined}
+            data-role={baseView?.role}
+            data-degree={baseView?.degree?.label}
+            data-overlay={baseView?.overlay ? '' : undefined}
+            data-shape={inShape ? '' : undefined}
             data-sounding={sounding ? '' : undefined}
             pointerEvents={onFret ? undefined : 'none'}
           >
@@ -154,7 +180,7 @@ interface Props {
   spaces: readonly number[];
   spelling: Spelling;
   leftHanded: boolean;
-  scale: ScaleViewModel | null;
+  display: DisplayModel | null;
 }
 
 /** A circle + label in every fret space, and one per string behind the nut for the open note. */

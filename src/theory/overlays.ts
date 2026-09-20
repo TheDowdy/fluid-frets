@@ -9,6 +9,7 @@ import {
   type AccidentalPref,
   type NoteName,
 } from './notes';
+import { describeChord, type ChordSpec } from './chords';
 import { getScale, spellScale, type ScaleDef } from './scales';
 
 export type Overlay =
@@ -17,7 +18,9 @@ export type Overlay =
   | { kind: 'triad'; degree: number }
   | { kind: 'seventh'; degree: number }
   /** Another scale sharing the tonic. */
-  | { kind: 'scale'; scaleId: string };
+  | { kind: 'scale'; scaleId: string }
+  /** The chord currently set up in the Chords tab. */
+  | { kind: 'chord' };
 
 export const NO_OVERLAY: Overlay = { kind: 'none' };
 
@@ -94,8 +97,12 @@ export function overlayPitchClasses(
   def: ScaleDef,
   overlay: Overlay,
   pref: AccidentalPref = 'sharp',
+  chordSpec?: ChordSpec,
 ): Set<number> | null {
   if (overlay.kind === 'none') return null;
+  if (overlay.kind === 'chord') {
+    return chordSpec ? new Set(describeChord(chordSpec, pref).pcs) : null;
+  }
   if (overlay.kind === 'scale') {
     const rootPc = noteNamePc(root);
     return new Set(getScale(overlay.scaleId).intervals.map((i) => pitchClass(rootPc + i)));
@@ -111,8 +118,10 @@ export function describeOverlay(
   def: ScaleDef,
   overlay: Overlay,
   pref: AccidentalPref = 'sharp',
+  chordSpec?: ChordSpec,
 ): string | null {
   if (overlay.kind === 'none') return null;
+  if (overlay.kind === 'chord') return chordSpec ? describeChord(chordSpec, pref).name : null;
   if (overlay.kind === 'scale') {
     return `${formatNoteName(root)} ${getScale(overlay.scaleId).name}`;
   }

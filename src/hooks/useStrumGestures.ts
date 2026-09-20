@@ -1,6 +1,7 @@
 import { useMemo, useRef } from 'react';
 import { stringY } from '../components/Fretboard/geometry';
-import { playFret, playStrumHit } from '../state/playing';
+import { tapFret } from '../state/chordActions';
+import { playStrumHit } from '../state/playing';
 import { StrumTracker } from '../theory/strum';
 import { STRING_COUNT } from '../theory/tunings';
 
@@ -55,7 +56,7 @@ export function useStrumGestures() {
             const g = gestures.current.get(pointerId);
             if (g?.tap && g.tracker.isTap() && !g.tapFired) {
               g.tapFired = true;
-              playFret(g.tap.string, g.tap.fret);
+              tapFret(g.tap.string, g.tap.fret);
             }
           }, HOLD_TAP_MS),
         };
@@ -78,7 +79,7 @@ export function useStrumGestures() {
 
       onPointerUp(e: React.PointerEvent<SVGSVGElement>) {
         const g = finish(e.pointerId);
-        if (g?.tap && g.tracker.isTap() && !g.tapFired) playFret(g.tap.string, g.tap.fret);
+        if (g?.tap && g.tracker.isTap() && !g.tapFired) tapFret(g.tap.string, g.tap.fret);
       },
 
       onPointerCancel(e: React.PointerEvent<SVGSVGElement>) {
