@@ -1,6 +1,6 @@
 {
-  "name": "Fretscape — Alternate Tuning Explorer",
-  "short_name": "Fretscape",
+  "name": "Fluid Frets — Alternate Tuning Explorer",
+  "short_name": "Fluid Frets",
   "description": "Find and hear chords and scales in alternate guitar tunings.",
   "start_url": "./",
   "scope": "./",

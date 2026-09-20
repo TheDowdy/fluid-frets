@@ -29,14 +29,14 @@ const clear = async () => {
 };
 
 await store(() => {
-  const engine = window.__fretscape.audioEngine;
+  const engine = window.__fluidfrets.audioEngine;
   window.__plucks = [];
   const real = engine.pluck.bind(engine);
   engine.pluck = (string, midi, opts) => {
     window.__plucks.push({ string, midi, ...opts });
     return real(string, midi, opts);
   };
-  window.__fretscape.store.getState().setStrumOnTuningChange(false);
+  window.__fluidfrets.store.getState().setStrumOnTuningChange(false);
 });
 const plucks = () => store(() => window.__plucks);
 const clearPlucks = () => store(() => (window.__plucks = []));
@@ -344,7 +344,7 @@ check(
 
 // ---------------------------------------------------------------- tunings
 await store(() => {
-  const s = window.__fretscape.store.getState();
+  const s = window.__fluidfrets.store.getState();
   s.jumpToTuning({ ...s.tuning, name: 'Open G', strings: [38, 43, 50, 55, 59, 62] });
 });
 await pick('0-0-0-0-0-0');
@@ -359,7 +359,7 @@ check(
   await text('identify-intervals'),
 );
 await store(() => {
-  const s = window.__fretscape.store.getState();
+  const s = window.__fluidfrets.store.getState();
   s.jumpToTuning({ ...s.tuning, name: 'Standard', strings: [40, 45, 50, 55, 59, 64] });
 });
 await sleep(150);
@@ -371,7 +371,7 @@ await sleep(200);
 check(
   'Explore mode: the neck is plain again and the strum shape released',
   (await board()).every((m) => m.role === null && !m.shape) &&
-    (await store(() => window.__fretscape.store.getState().strumShape)) === null,
+    (await store(() => window.__fluidfrets.store.getState().strumShape)) === null,
 );
 const geo2 = await store(() => {
   const c = document.querySelector('.fretboard-svg').getScreenCTM();
@@ -399,7 +399,7 @@ await page.getByRole('tab', { name: 'Identify' }).click();
 await pick('x-3-2-0-1-0');
 await sleep(200);
 await page.reload();
-await page.waitForFunction(() => window.__fretscape);
+await page.waitForFunction(() => window.__fluidfrets);
 await sleep(300);
 check(
   'the Identify tab is remembered across a reload, with a fresh empty selection',

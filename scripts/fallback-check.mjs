@@ -25,16 +25,20 @@ async function session(label, { insecure, flag }) {
     });
   }
   await page.goto(flag ? url + '&noworklet' : url);
-  await page.evaluate(() => window.__fretscape.store.getState().setStrumOnTuningChange(false));
+  await page.evaluate(() => window.__fluidfrets.store.getState().setStrumOnTuningChange(false));
   const marker = (s, f) => page.locator(`[data-string="${s}"][data-fret="${f}"]`);
   await marker(1, 0).click();
-  await page.waitForFunction(() => window.__fretscape.audioEngine.getStatus() === 'running', null, {
-    timeout: 8000,
-  });
-  const engine = await page.evaluate(() => window.__fretscape.audioEngine.synthEngine);
+  await page.waitForFunction(
+    () => window.__fluidfrets.audioEngine.getStatus() === 'running',
+    null,
+    {
+      timeout: 8000,
+    },
+  );
+  const engine = await page.evaluate(() => window.__fluidfrets.audioEngine.synthEngine);
   const pitch = (expectedHz) =>
     page.evaluate((hz) => {
-      const e = window.__fretscape.audioEngine;
+      const e = window.__fluidfrets.audioEngine;
       const x = e.getOutputSnapshot();
       const sr = e.context.sampleRate;
       let best = 0,
@@ -64,7 +68,7 @@ for (const [label, opts, expected] of [
   await s.page.waitForTimeout(150);
   const hz = await s.pitch(110);
   check(`${label}: plays A2 at 110 Hz`, Math.abs(hz - 110) < 1.5, `${hz.toFixed(2)} Hz`);
-  const peak = await s.page.evaluate(() => window.__fretscape.audioEngine.getOutputPeak());
+  const peak = await s.page.evaluate(() => window.__fluidfrets.audioEngine.getOutputPeak());
   check(`${label}: audible`, peak > 0.02 && peak < 1, peak.toFixed(3));
 
   // A tuning peg drag bends the ringing note (setPitch) without re-plucking.
@@ -86,9 +90,9 @@ for (const [label, opts, expected] of [
   await s.page.waitForTimeout(300);
 
   // Strum: six notes, then silence after Mute.
-  await s.page.evaluate(() => window.__fretscape.store.getState().setMuted(true));
+  await s.page.evaluate(() => window.__fluidfrets.store.getState().setMuted(true));
   await s.page.waitForTimeout(150);
-  const muted = await s.page.evaluate(() => window.__fretscape.audioEngine.getOutputPeak());
+  const muted = await s.page.evaluate(() => window.__fluidfrets.audioEngine.getOutputPeak());
   check(`${label}: Mute silences it`, muted < 1e-3, muted.toExponential(1));
   check(`${label}: no console or page errors`, s.errors.length === 0, s.errors.join(' | '));
   await s.page.close();

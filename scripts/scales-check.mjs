@@ -22,15 +22,15 @@ const check = (name, ok, detail = '') => {
 const sleep = (ms) => page.waitForTimeout(ms);
 const store = (fn, arg) => page.evaluate(fn, arg);
 const setScale = (patch) =>
-  store((p) => window.__fretscape.store.getState().setScaleSettings(p), patch);
+  store((p) => window.__fluidfrets.store.getState().setScaleSettings(p), patch);
 const setPlayback = (patch) =>
-  store((p) => window.__fretscape.store.getState().setPlayback(p), patch);
+  store((p) => window.__fluidfrets.store.getState().setPlayback(p), patch);
 const marker = (string, fret) => page.locator(`[data-string="${string}"][data-fret="${fret}"]`);
 const settle = () => sleep(150);
 
-await store(() => window.__fretscape.store.getState().setStrumOnTuningChange(false));
+await store(() => window.__fluidfrets.store.getState().setStrumOnTuningChange(false));
 await store(() => {
-  const engine = window.__fretscape.audioEngine;
+  const engine = window.__fluidfrets.audioEngine;
   window.__plucks = [];
   const real = engine.pluck.bind(engine);
   engine.pluck = (string, midi, opts) => {
@@ -223,7 +223,7 @@ check(
   before === '#dc2f3e' && cb === '#d55e00',
   `${before} → ${cb}`,
 );
-await store(() => window.__fretscape.store.getState().setPalette('rainbow'));
+await store(() => window.__fluidfrets.store.getState().setPalette('rainbow'));
 
 // ---------------------------------------------------------------- overlays
 await setScale({
@@ -274,7 +274,7 @@ await page
 await settle();
 check(
   'overlay: a chord overlay is dropped when the scale has no diatonic chords',
-  (await store(() => window.__fretscape.store.getState().scaleSettings.overlay.kind)) === 'none',
+  (await store(() => window.__fluidfrets.store.getState().scaleSettings.overlay.kind)) === 'none',
 );
 
 // ---------------------------------------------------------------- spelling
@@ -294,7 +294,7 @@ check(
 
 // ---------------------------------------------------------------- follows the tuning
 await store(() => {
-  const s = window.__fretscape.store.getState();
+  const s = window.__fluidfrets.store.getState();
   s.jumpToTuning({ ...s.tuning, name: 'Open G', strings: [38, 43, 50, 55, 59, 62] });
 });
 await setScale({ rootPc: 7, scaleId: 'major' });
@@ -307,19 +307,19 @@ check(
     board.filter((m) => m.string === 0 && m.fret === 0)[0]?.label === 'D',
 );
 await store(() => {
-  const s = window.__fretscape.store.getState();
+  const s = window.__fluidfrets.store.getState();
   s.jumpToTuning({ ...s.tuning, name: 'Standard', strings: [40, 45, 50, 55, 59, 64] });
 });
 
 // ---------------------------------------------------------------- persistence
 await setScale({ rootPc: 4, scaleId: 'dorian', colourMode: true });
 await setPlayback({ tempo: 133, direction: 'updown', range: 'two-octaves', position: 5 });
-await store(() => window.__fretscape.store.getState().setPalette('colourblind'));
+await store(() => window.__fluidfrets.store.getState().setPalette('colourblind'));
 await sleep(200);
 await page.reload();
-await page.waitForFunction(() => window.__fretscape);
+await page.waitForFunction(() => window.__fluidfrets);
 const restored = await store(() => {
-  const s = window.__fretscape.store.getState();
+  const s = window.__fluidfrets.store.getState();
   return { mode: s.mode, scale: s.scaleSettings, playback: s.playback, palette: s.palette };
 });
 check(
@@ -335,7 +335,7 @@ check(
 );
 await page.evaluate(() =>
   localStorage.setItem(
-    'fretscape-settings',
+    'fluid-frets-settings',
     JSON.stringify({
       state: {
         mode: 'scale',
@@ -348,19 +348,19 @@ await page.evaluate(() =>
   ),
 );
 await page.reload();
-await page.waitForFunction(() => window.__fretscape);
-const junk = await store(() => window.__fretscape.store.getState().scaleSettings);
+await page.waitForFunction(() => window.__fluidfrets);
+const junk = await store(() => window.__fluidfrets.store.getState().scaleSettings);
 check(
   'junk in storage falls back to defaults instead of crashing',
   junk.scaleId === 'major' && junk.rootPc === 0,
 );
 await setPlayback({ tempo: 100, direction: 'up', range: 'octave', position: 'auto' });
 await setScale({ colourMode: false });
-await store(() => window.__fretscape.store.getState().setPalette('rainbow'));
+await store(() => window.__fluidfrets.store.getState().setPalette('rainbow'));
 
 // ---------------------------------------------------------------- playback
 await store(() => {
-  const engine = window.__fretscape.audioEngine;
+  const engine = window.__fluidfrets.audioEngine;
   window.__plucks = [];
   const real = engine.pluck.bind(engine);
   if (!engine.__patched) {
@@ -372,7 +372,7 @@ await store(() => {
   }
   window.__heard = [];
   window.__soundingDom = [];
-  window.__fretscape.store.subscribe((s, prev) => {
+  window.__fluidfrets.store.subscribe((s, prev) => {
     if (s.playhead !== prev.playhead) {
       const ctx = engine.context;
       const latency = ctx.outputLatency || ctx.baseLatency || 0;
@@ -387,7 +387,7 @@ await store(() => {
   });
 });
 await marker(1, 0).click(); // make sure audio is unlocked and running
-await page.waitForFunction(() => window.__fretscape.audioEngine.getStatus() === 'running');
+await page.waitForFunction(() => window.__fluidfrets.audioEngine.getStatus() === 'running');
 await setScale({ rootPc: 4, scaleId: 'minor-pentatonic' });
 await setPlayback({ tempo: 150, range: 'octave', direction: 'up', position: 'auto' });
 await sleep(700);
@@ -398,7 +398,7 @@ check(
   'play button becomes a Stop button while playing',
   (await page.getByRole('button', { name: /Stop/ }).getAttribute('aria-pressed')) === 'true',
 );
-await page.waitForFunction(() => !window.__fretscape.store.getState().playing, null, {
+await page.waitForFunction(() => !window.__fluidfrets.store.getState().playing, null, {
   timeout: 8000,
 });
 await sleep(150);
@@ -450,7 +450,7 @@ check(
 );
 check(
   'playback: highlight clears and the button resets at the end',
-  (await store(() => window.__fretscape.store.getState().playhead)) === null &&
+  (await store(() => window.__fluidfrets.store.getState().playhead)) === null &&
     (await page.getByRole('button', { name: /Play/ }).count()) === 1,
 );
 
@@ -458,7 +458,7 @@ async function planFor(over) {
   await setPlayback(over);
   await store(() => (window.__plucks = []));
   await page.getByRole('button', { name: /Play/ }).click();
-  await page.waitForFunction(() => !window.__fretscape.store.getState().playing, null, {
+  await page.waitForFunction(() => !window.__fluidfrets.store.getState().playing, null, {
     timeout: 20000,
   });
   return store(() => window.__plucks);
@@ -509,7 +509,7 @@ await sleep(800);
 const later = (await store(() => window.__plucks)).length;
 check(
   'stop: playback halts (at most the note already queued sounds)',
-  later - atStop <= 1 && !(await store(() => window.__fretscape.store.getState().playing)),
+  later - atStop <= 1 && !(await store(() => window.__fluidfrets.store.getState().playing)),
   `${atStop} → ${later}`,
 );
 await page.getByRole('button', { name: /Play/ }).click();
@@ -520,7 +520,7 @@ await sleep(700);
 check(
   'switching to Explore stops playback and removes scale styling',
   (await store(() => window.__plucks)).length - atLeave <= 1 &&
-    !(await store(() => window.__fretscape.store.getState().playing)) &&
+    !(await store(() => window.__fluidfrets.store.getState().playing)) &&
     (await readBoard()).every((m) => m.role === null),
 );
 

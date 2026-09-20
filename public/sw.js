@@ -1,11 +1,11 @@
 /*
- * Fretscape service worker: makes the app work offline after the first visit.
+ * Fluid Frets service worker: makes the app work offline after the first visit.
  *  - Pages (navigations): network first, falling back to the last cached copy.
  *  - Everything else from this site: cache first. Built files have hashed names, so a cached one is
  *    never stale; a new release simply asks for new names.
  * Requests to other origins are never touched. Bump CACHE to drop everything cached so far.
  */
-const CACHE = 'fretscape-v1';
+const CACHE = 'fluid-frets-v1';
 
 self.addEventListener('install', () => self.skipWaiting());
 

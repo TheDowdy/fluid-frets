@@ -29,7 +29,7 @@ export function Toolbar() {
 
   return (
     <header className="toolbar">
-      <h1 className="toolbar-title">Fretscape</h1>
+      <h1 className="toolbar-title">Fluid Frets</h1>
 
       <label className="field">
         <span>Tuning</span>

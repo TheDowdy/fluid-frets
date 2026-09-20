@@ -1,6 +1,6 @@
-# Fretscape architecture
+# Fluid Frets architecture
 
-Fretscape is a client-only single-page app: **Vite + React 18 + TypeScript (strict) + Zustand**, the
+Fluid Frets is a client-only single-page app: **Vite + React 18 + TypeScript (strict) + Zustand**, the
 fretboard drawn in **SVG**, sound made by a **physical-model string synth** on the Web Audio API.
 There is no backend. This document says where things live and how to extend them.
 
@@ -116,7 +116,7 @@ To add samples:
 
 `npm test` runs the Vitest unit tests. The browser checks drive real Chrome with `playwright-core`
 against the dev server (port 5199) or a production build (port 5198, add `?debug` to the URL, which
-exposes `window.__fretscape = { audioEngine, store }`): `check:app`, `check:pegs`, `check:strum`,
+exposes `window.__fluidfrets = { audioEngine, store }`): `check:app`, `check:pegs`, `check:strum`,
 `check:scales`, `check:chords`, `check:identify`, `check:guitars`, `check:fallback`, `check:a11y`
 (axe-core + keyboard), `check:perf` (frame times under CPU throttling), and `check:deploy` (the built
 app served from a sub-path with the production security headers, offline via the service worker).

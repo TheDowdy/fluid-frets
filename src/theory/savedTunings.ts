@@ -4,7 +4,8 @@ import { midiToName, type AccidentalPref } from './notes';
 export const CUSTOM_ID = 'custom';
 export const MAX_NAME_LENGTH = 60;
 const MAX_IMPORT = 200;
-const EXPORT_FORMAT = 'fretscape-tunings';
+/** Files exported before the rename say 'fretscape-tunings'; import ignores the tag, so they still load. */
+const EXPORT_FORMAT = 'fluid-frets-tunings';
 
 export function customTuning(strings: readonly number[]): Tuning {
   return { id: CUSTOM_ID, name: 'Custom', strings: [...strings], builtIn: false };

@@ -30,7 +30,7 @@ const LIGHT = 'rgb(245, 242, 236)';
 {
   const { page, errors } = await open();
   const nonDefault = await page.evaluate(() => {
-    const s = window.__fretscape.store.getState();
+    const s = window.__fluidfrets.store.getState();
     s.jumpToTuning({ id: 'custom', name: 'Custom', strings: [38, 43, 50, 55, 59, 62] });
     s.setFretCount(20);
     s.setAccidentalPref('flat');
@@ -79,7 +79,7 @@ const LIGHT = 'rgb(245, 242, 236)';
     s.setChordDisplay({ showIntervals: true, colourByFunction: false, hideOthers: true });
     s.setChordPlay({ direction: 'up', speedMs: 80 });
     s.setSavedTunings([{ id: 'my-1', name: 'Mine', strings: [38, 43, 50, 55, 59, 62] }]);
-    const fresh = window.__fretscape.store.getState(); // state objects are immutable: re-read after the changes
+    const fresh = window.__fluidfrets.store.getState(); // state objects are immutable: re-read after the changes
     const keys = [
       'fretCount',
       'accidentalPref',
@@ -114,10 +114,10 @@ const LIGHT = 'rgb(245, 242, 236)';
   });
   await page.waitForTimeout(300);
   await page.reload();
-  await page.waitForFunction(() => window.__fretscape);
+  await page.waitForFunction(() => window.__fluidfrets);
   await page.waitForTimeout(300);
   const after = await page.evaluate((keys) => {
-    const s = window.__fretscape.store.getState();
+    const s = window.__fluidfrets.store.getState();
     return {
       values: Object.fromEntries(keys.map((k) => [k, s[k]])),
       tuning: s.tuning.strings,
@@ -155,7 +155,7 @@ const LIGHT = 'rgb(245, 242, 236)';
     (await bg(page)) === LIGHT,
     await bg(page),
   );
-  await page.evaluate(() => window.__fretscape.store.getState().setTheme('dark'));
+  await page.evaluate(() => window.__fluidfrets.store.getState().setTheme('dark'));
   await page.waitForTimeout(100);
   check(
     'forcing dark overrides a light system',
@@ -173,7 +173,7 @@ const LIGHT = 'rgb(245, 242, 236)';
     (await bg(page)) === DARK,
     await bg(page),
   );
-  await page.evaluate(() => window.__fretscape.store.getState().setTheme('light'));
+  await page.evaluate(() => window.__fluidfrets.store.getState().setTheme('light'));
   await page.waitForTimeout(100);
   check(
     'forcing light overrides a dark system',
@@ -186,7 +186,7 @@ const LIGHT = 'rgb(245, 242, 236)';
   check(
     'the Settings dialog changes the theme',
     (await bg(page)) === DARK &&
-      (await page.evaluate(() => window.__fretscape.store.getState().theme)) === 'dark',
+      (await page.evaluate(() => window.__fluidfrets.store.getState().theme)) === 'dark',
   );
   await page.getByLabel('Theme').selectOption('light');
   await page.keyboard.press('Escape');
@@ -206,7 +206,7 @@ const LIGHT = 'rgb(245, 242, 236)';
   const page = await context.newPage();
   await page.addInitScript(() =>
     localStorage.setItem(
-      'fretscape-settings',
+      'fluid-frets-settings',
       JSON.stringify({ state: { theme: 'light' }, version: 1 }),
     ),
   );
@@ -241,7 +241,7 @@ const LIGHT = 'rgb(245, 242, 236)';
       };
     });
   const normal = await spacing();
-  await page.evaluate(() => window.__fretscape.store.getState().setLargeNeck(true));
+  await page.evaluate(() => window.__fluidfrets.store.getState().setLargeNeck(true));
   await page.waitForTimeout(150);
   const large = await spacing();
   check(
@@ -274,10 +274,10 @@ const LIGHT = 'rgb(245, 242, 236)';
 // ---------------------------------------------------------------- reduced motion
 {
   const { context, page } = await open({ reducedMotion: 'reduce' });
-  await page.evaluate(() => window.__fretscape.store.getState().setStrumOnTuningChange(false));
+  await page.evaluate(() => window.__fluidfrets.store.getState().setStrumOnTuningChange(false));
   const select = page.locator('label.field:has(span:text-is("Tuning")) select');
   await select.selectOption({ label: 'Drop D — D2 A2 D3 G3 B3 E4' });
-  const live = await page.evaluate(() => window.__fretscape.store.getState().liveTuning[0]);
+  const live = await page.evaluate(() => window.__fluidfrets.store.getState().liveTuning[0]);
   check(
     'reduced motion: a tuning change lands at once instead of sliding',
     live === 38,
@@ -295,11 +295,11 @@ const LIGHT = 'rgb(245, 242, 236)';
 }
 {
   const { context, page } = await open();
-  await page.evaluate(() => window.__fretscape.store.getState().setStrumOnTuningChange(false));
+  await page.evaluate(() => window.__fluidfrets.store.getState().setStrumOnTuningChange(false));
   await page
     .locator('label.field:has(span:text-is("Tuning")) select')
     .selectOption({ label: 'Drop D — D2 A2 D3 G3 B3 E4' });
-  const early = await page.evaluate(() => window.__fretscape.store.getState().liveTuning[0]);
+  const early = await page.evaluate(() => window.__fluidfrets.store.getState().liveTuning[0]);
   check(
     'without reduced motion the same change slides (still mid-way right after)',
     early > 38,
@@ -309,11 +309,105 @@ const LIGHT = 'rgb(245, 242, 236)';
   await context.close();
 }
 
+// ---------------------------------------------------------------- the rename (Fretscape → Fluid Frets)
+{
+  const context = await browser.newContext({
+    viewport: { width: 1440, height: 900 },
+    colorScheme: 'dark',
+  });
+  const page = await context.newPage();
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  // Someone who used the app before it was renamed: settings under the old key only.
+  await page.addInitScript(() => {
+    if (!sessionStorage.getItem('seeded')) {
+      sessionStorage.setItem('seeded', '1');
+      localStorage.clear();
+      localStorage.setItem(
+        'fretscape-settings',
+        JSON.stringify({
+          state: {
+            tuning: { id: 'custom', name: 'Custom', strings: [38, 43, 50, 55, 59, 62] },
+            savedTunings: [{ id: 'old-1', name: 'From before', strings: [38, 43, 50, 55, 59, 62] }],
+            fretCount: 19,
+            theme: 'light',
+            guitarModel: 'classical',
+          },
+          version: 1,
+        }),
+      );
+    }
+  });
+  await page.goto(url);
+  await page.waitForSelector('.fretboard-svg');
+  const restored = await page.evaluate(() => {
+    const st = window.__fluidfrets.store.getState();
+    return {
+      frets: st.fretCount,
+      theme: st.theme,
+      model: st.guitarModel,
+      tuning: st.tuning.strings,
+      saved: st.savedTunings.map((t) => t.name),
+    };
+  });
+  check(
+    'settings saved before the rename are carried over (tuning, saved tunings, frets, theme, guitar)',
+    restored.frets === 19 &&
+      restored.theme === 'light' &&
+      restored.model === 'classical' &&
+      restored.tuning[0] === 38 &&
+      restored.saved.join() === 'From before',
+    JSON.stringify(restored),
+  );
+  check(
+    'and the page uses the migrated theme straight away',
+    (await bg(page)) === LIGHT,
+    await bg(page),
+  );
+  await page.evaluate(() => window.__fluidfrets.store.getState().setFretCount(21));
+  await page.waitForTimeout(200);
+  const keys = await page.evaluate(() => ({
+    fresh: !!localStorage.getItem('fluid-frets-settings'),
+    old: !!localStorage.getItem('fretscape-settings'),
+  }));
+  check(
+    'the next change saves under the new key and retires the old one',
+    keys.fresh && !keys.old,
+    JSON.stringify(keys),
+  );
+  await page.reload();
+  await page.waitForFunction(() => window.__fluidfrets);
+  check(
+    'and it all survives another reload',
+    (await page.evaluate(() => window.__fluidfrets.store.getState().fretCount)) === 21 &&
+      (await page.evaluate(() => window.__fluidfrets.store.getState().savedTunings.length)) === 1,
+  );
+  check('no errors during the migration', errors.length === 0, errors.join(' | '));
+  await context.close();
+}
+
+// The name itself, everywhere a person sees it.
+{
+  const { page } = await open();
+  check(
+    'the page title, heading and manifest say Fluid Frets',
+    (await page.title()).startsWith('Fluid Frets') &&
+      (await page.locator('h1').textContent()) === 'Fluid Frets' &&
+      (await (await page.request.get(new URL('manifest.webmanifest', page.url()).href)).json())
+        .short_name === 'Fluid Frets',
+  );
+  check(
+    'and nothing on the page still says Fretscape',
+    !/fretscape/i.test(await page.evaluate(() => document.documentElement.outerHTML)),
+  );
+  await page.close();
+}
+
 // ---------------------------------------------------------------- reset
 {
   const { page } = await open();
   await page.evaluate(() => {
-    const s = window.__fretscape.store.getState();
+    const s = window.__fluidfrets.store.getState();
     s.setTheme('light');
     s.setFretCount(19);
     s.setGuitarModel('classical');
@@ -329,16 +423,16 @@ const LIGHT = 'rgb(245, 242, 236)';
   await page.getByRole('button', { name: 'Cancel' }).click();
   check(
     'and can be cancelled without changing anything',
-    (await page.evaluate(() => window.__fretscape.store.getState().fretCount)) === 19,
+    (await page.evaluate(() => window.__fluidfrets.store.getState().fretCount)) === 19,
   );
   await page.getByRole('button', { name: 'Reset all settings…' }).click();
   await Promise.all([
     page.waitForNavigation(),
     page.getByRole('button', { name: 'Yes, reset everything' }).click(),
   ]);
-  await page.waitForFunction(() => window.__fretscape);
+  await page.waitForFunction(() => window.__fluidfrets);
   const s = await page.evaluate(() => {
-    const st = window.__fretscape.store.getState();
+    const st = window.__fluidfrets.store.getState();
     return {
       theme: st.theme,
       frets: st.fretCount,
@@ -360,7 +454,7 @@ const LIGHT = 'rgb(245, 242, 236)';
   await page.getByRole('button', { name: 'Settings' }).click();
   await page.keyboard.press('Escape');
   await page.locator('[data-string="1"][data-fret="0"]').click();
-  await page.waitForFunction(() => window.__fretscape.audioEngine.getStatus() === 'running');
+  await page.waitForFunction(() => window.__fluidfrets.audioEngine.getStatus() === 'running');
   await page.getByRole('button', { name: 'Settings' }).click();
   check(
     'and reports AudioWorklet once running',

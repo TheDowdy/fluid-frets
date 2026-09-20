@@ -9,6 +9,7 @@ import {
   type Customise,
   type GuitarModelId,
 } from '../components/Fretboard/guitarSkins';
+import { settingsStorage, SETTINGS_KEY } from './storage';
 import { DEFAULT_CHORD, normalizeChord, sanitizeChord, type ChordSpec } from '../theory/chords';
 import {
   DEFAULT_CHORD_DISPLAY,
@@ -266,7 +267,8 @@ export const useStore = create<AppState>()(
       setPlaying: (playing) => set({ playing }),
     }),
     {
-      name: 'fretscape-settings',
+      name: SETTINGS_KEY,
+      storage: settingsStorage,
       version: 1,
       partialize: (s): Persisted => ({
         tuning: s.tuning,

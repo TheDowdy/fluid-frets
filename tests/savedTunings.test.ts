@@ -89,12 +89,26 @@ describe('saving, renaming, deleting', () => {
   });
 });
 
+describe('files exported before the rename', () => {
+  it('still import (the old format tag is ignored)', () => {
+    const old = JSON.stringify({
+      format: 'fretscape-tunings',
+      version: 1,
+      tunings: [{ name: 'Old friend', strings: [38, 43, 50, 55, 59, 62] }],
+    });
+    const result = importTunings([], old);
+    expect(result.errors).toEqual([]);
+    expect(result.added).toBe(1);
+    expect(result.saved[0]?.name).toBe('Old friend');
+  });
+});
+
 describe('export / import', () => {
   it('round-trips through JSON', () => {
     const a = saveTuning([], 'A', CGDGBD);
     const b = saveTuning(a.saved, 'B', notes('D2 A2 D3 G3 B3 E4'));
     const text = exportTunings(b.saved);
-    expect(JSON.parse(text)).toMatchObject({ format: 'fretscape-tunings', version: 1 });
+    expect(JSON.parse(text)).toMatchObject({ format: 'fluid-frets-tunings', version: 1 });
     const back = importTunings([], text);
     expect(back.added).toBe(2);
     expect(back.errors).toEqual([]);

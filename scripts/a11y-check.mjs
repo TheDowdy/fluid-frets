@@ -24,7 +24,7 @@ const check = (name, ok, detail = '') => {
   console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? ' — ' + detail : ''}`);
 };
 const sleep = (ms) => page.waitForTimeout(ms);
-await page.evaluate(() => window.__fretscape.store.getState().setStrumOnTuningChange(false));
+await page.evaluate(() => window.__fluidfrets.store.getState().setStrumOnTuningChange(false));
 await page.addScriptTag({ content: axeSource });
 
 async function axe(label) {
@@ -48,14 +48,14 @@ async function axe(label) {
 
 const tabs = ['Explore', 'Scales', 'Chords', 'Identify'];
 for (const theme of ['dark', 'light']) {
-  await page.evaluate((t) => window.__fretscape.store.getState().setTheme(t), theme);
+  await page.evaluate((t) => window.__fluidfrets.store.getState().setTheme(t), theme);
   await sleep(150);
   for (const tab of tabs) {
     await page.getByRole('tab', { name: tab }).click();
     await sleep(200);
     if (tab === 'Scales')
       await page.evaluate(() =>
-        window.__fretscape.store
+        window.__fluidfrets.store
           .getState()
           .setScaleSettings({ colourMode: true, overlay: { kind: 'triad', degree: 4 } }),
       );
@@ -68,7 +68,7 @@ for (const theme of ['dark', 'light']) {
   }
 }
 await page.evaluate(() => {
-  const s = window.__fretscape.store.getState();
+  const s = window.__fluidfrets.store.getState();
   s.setTheme('light');
   s.setMode('chord');
 });
@@ -85,12 +85,12 @@ await page.getByRole('button', { name: 'Customise' }).click();
 await axe('light theme, Customise popover');
 await page.keyboard.press('Escape');
 for (const model of ['classical', 'double-cut', 'hollow-body']) {
-  await page.evaluate((m) => window.__fretscape.store.getState().setGuitarModel(m), model);
+  await page.evaluate((m) => window.__fluidfrets.store.getState().setGuitarModel(m), model);
   await sleep(100);
 }
 await axe('light theme, hollow-body guitar');
 await page.evaluate(() => {
-  const s = window.__fretscape.store.getState();
+  const s = window.__fluidfrets.store.getState();
   s.setTheme('dark');
   s.setMode('explore');
   s.setGuitarModel('steel-acoustic');
@@ -147,7 +147,7 @@ for (let i = 0; i < 9; i++) await page.keyboard.press('ArrowUp');
 check('and at the highest', /String 1/.test(await status()));
 
 await page.evaluate(() => {
-  const engine = window.__fretscape.audioEngine;
+  const engine = window.__fluidfrets.audioEngine;
   window.__plucks = [];
   const real = engine.pluck.bind(engine);
   engine.pluck = (string, midi, opts) => {
@@ -176,7 +176,7 @@ check(
 );
 
 // Left-handed: arrow directions follow what is on screen.
-await page.evaluate(() => window.__fretscape.store.getState().setLeftHanded(true));
+await page.evaluate(() => window.__fluidfrets.store.getState().setLeftHanded(true));
 await page.keyboard.press('Home');
 await page.keyboard.press('ArrowLeft');
 check(
@@ -184,7 +184,7 @@ check(
   /fret 1/.test(await status()),
   await status(),
 );
-await page.evaluate(() => window.__fretscape.store.getState().setLeftHanded(false));
+await page.evaluate(() => window.__fluidfrets.store.getState().setLeftHanded(false));
 
 // Chord mode: Enter edits the shape like a tap.
 await page.getByRole('tab', { name: 'Chords' }).click();
@@ -206,10 +206,10 @@ check(
 await page.getByRole('tab', { name: 'Explore' }).click();
 const peg = page.locator('[data-peg="0"]');
 await peg.focus();
-const t0 = await page.evaluate(() => window.__fretscape.store.getState().tuning.strings[0]);
+const t0 = await page.evaluate(() => window.__fluidfrets.store.getState().tuning.strings[0]);
 await page.keyboard.press('ArrowDown');
 await sleep(300);
-const t1 = await page.evaluate(() => window.__fretscape.store.getState().tuning.strings[0]);
+const t1 = await page.evaluate(() => window.__fluidfrets.store.getState().tuning.strings[0]);
 check('a tuning peg still responds to ↑/↓ from the keyboard', t1 === t0 - 1, `${t0} → ${t1}`);
 check(
   'and the fretboard cursor stays off while a peg has focus',

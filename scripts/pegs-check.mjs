@@ -24,7 +24,7 @@ const check = (name, ok, detail = '') => {
 };
 const state = () =>
   page.evaluate(() => {
-    const s = window.__fretscape.store.getState();
+    const s = window.__fluidfrets.store.getState();
     return { tuning: s.tuning, live: s.liveTuning, saved: s.savedTunings };
   });
 const peg = (i) => page.locator(`[data-peg="${i}"]`);
@@ -52,7 +52,7 @@ async function drag(i, semis, { steps = 10, pause = 0, release = true, during } 
 }
 const autoPitch = (expected) =>
   page.evaluate((expectedHz) => {
-    const e = window.__fretscape.audioEngine;
+    const e = window.__fluidfrets.audioEngine;
     const x = e.getOutputSnapshot();
     const sr = e.context.sampleRate;
     const p = sr / expectedHz;
@@ -81,7 +81,7 @@ const hz = (midi) => 440 * 2 ** ((midi - 69) / 12);
 
 // ---------------------------------------------------------------- setup / a11y
 await page.locator('[data-string="5"][data-fret="0"]').click(); // unlock audio
-await page.waitForFunction(() => window.__fretscape.audioEngine.getStatus() === 'running');
+await page.waitForFunction(() => window.__fluidfrets.audioEngine.getStatus() === 'running');
 await sleep(300);
 
 check(
@@ -273,7 +273,7 @@ const trace = await page.evaluate(async () => {
   const sel = [...document.querySelectorAll('label.field')]
     .find((l) => l.textContent.startsWith('Tuning'))
     .querySelector('select');
-  const store = window.__fretscape.store;
+  const store = window.__fluidfrets.store;
   const values = [];
   const t0 = performance.now();
   sel.value = 'open-g';
@@ -306,7 +306,7 @@ check(
 
 // ---------------------------------------------------------------- strum on tuning change
 await page.evaluate(() => {
-  const e = window.__fretscape.audioEngine;
+  const e = window.__fluidfrets.audioEngine;
   window.__strums = 0;
   const orig = e.pluckMany.bind(e);
   e.pluckMany = (...a) => {
@@ -435,7 +435,7 @@ await page.getByRole('button', { name: 'Cancel' }).click();
 check('cancelling keeps a single saved tuning', (await state()).saved.length === 1);
 
 await page.reload();
-await page.waitForFunction(() => window.__fretscape);
+await page.waitForFunction(() => window.__fluidfrets);
 const reloaded = await state();
 check(
   'saved tuning and current tuning survive a reload',
@@ -465,7 +465,7 @@ const exported = JSON.parse(
 );
 check(
   'export downloads JSON with the saved tunings',
-  download.suggestedFilename() === 'fretscape-tunings.json' &&
+  download.suggestedFilename() === 'fluid-frets-tunings.json' &&
     exported.tunings?.length === 1 &&
     exported.tunings[0].name === 'Renamed',
   JSON.stringify(exported.tunings?.[0]),

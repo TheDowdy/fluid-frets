@@ -1,4 +1,4 @@
-# Fretscape — Alternate Tuning Explorer
+# Fluid Frets — Alternate Tuning Explorer
 
 A web app for finding and hearing chords and scales in alternate guitar tunings. See
 [PLAN.md](./PLAN.md) for the full build plan and phase list.

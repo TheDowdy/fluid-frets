@@ -13,7 +13,7 @@ createRoot(document.getElementById('root')!).render(
 
 // Test hook: lets browser tests inspect the audio engine (dev builds, or add ?debug to the URL).
 if (import.meta.env.DEV || new URLSearchParams(location.search).has('debug')) {
-  (window as unknown as { __fretscape: unknown }).__fretscape = { audioEngine, store: useStore };
+  (window as unknown as { __fluidfrets: unknown }).__fluidfrets = { audioEngine, store: useStore };
 }
 
 // Offline support: a small service worker in production builds (it needs https or localhost).

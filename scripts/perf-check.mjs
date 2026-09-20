@@ -17,9 +17,9 @@ const context = await browser.newContext({
 const page = await context.newPage();
 const cdp = await context.newCDPSession(page);
 await page.goto(url);
-await page.evaluate(() => window.__fretscape.store.getState().setStrumOnTuningChange(false));
+await page.evaluate(() => window.__fluidfrets.store.getState().setStrumOnTuningChange(false));
 await page.locator('[data-string="1"][data-fret="0"]').click(); // unlock audio
-await page.waitForFunction(() => window.__fretscape.audioEngine.getStatus() === 'running');
+await page.waitForFunction(() => window.__fluidfrets.audioEngine.getStatus() === 'running');
 await page.waitForTimeout(300);
 
 const results = [];
@@ -102,7 +102,7 @@ for (const [label, cpu] of [
 }
 
 // A scale/chord workload at the same throttle.
-await page.evaluate(() => window.__fretscape.store.getState().setMode('chord'));
+await page.evaluate(() => window.__fluidfrets.store.getState().setMode('chord'));
 await page.waitForTimeout(400);
 const chordChange = await frames(async () => {
   for (const spec of [
@@ -111,7 +111,7 @@ const chordChange = await frames(async () => {
     { seventh: 'maj7' },
   ]) {
     await page.evaluate((spec) => {
-      const s = window.__fretscape.store;
+      const s = window.__fluidfrets.store;
       s.getState().setChordSpec({
         ...s.getState().chordSpec,
         quality: 'major',
@@ -131,14 +131,14 @@ check(
   fmt(chordChange),
 );
 
-await page.evaluate(() => window.__fretscape.store.getState().setMode('scale'));
+await page.evaluate(() => window.__fluidfrets.store.getState().setMode('scale'));
 // The panel starts folded on a short (phone landscape) screen; open it to reach Play.
 await page
   .getByRole('button', { name: /Show panel/ })
   .click()
   .catch(() => {});
 await page.evaluate(() =>
-  window.__fretscape.store
+  window.__fluidfrets.store
     .getState()
     .setPlayback({ tempo: 240, range: 'neck', direction: 'updown' }),
 );

@@ -24,7 +24,7 @@ const sleep = (ms) => page.waitForTimeout(ms);
 const store = (fn, arg) => page.evaluate(fn, arg);
 const setChord = (patch) =>
   store((p) => {
-    const s = window.__fretscape.store.getState();
+    const s = window.__fluidfrets.store.getState();
     s.setChordSpec({ ...s.chordSpec, ...p });
   }, patch);
 const marker = (string, fret) => page.locator(`[data-string="${string}"][data-fret="${fret}"]`);
@@ -33,14 +33,14 @@ const chip = (name) => page.getByRole('button', { name, exact: true });
 const settle = () => sleep(200);
 
 await store(() => {
-  const engine = window.__fretscape.audioEngine;
+  const engine = window.__fluidfrets.audioEngine;
   window.__plucks = [];
   const real = engine.pluck.bind(engine);
   engine.pluck = (string, midi, opts) => {
     window.__plucks.push({ string, midi, ...opts, at: performance.now() });
     return real(string, midi, opts);
   };
-  window.__fretscape.store.getState().setStrumOnTuningChange(false);
+  window.__fluidfrets.store.getState().setStrumOnTuningChange(false);
 });
 const plucks = () => store(() => window.__plucks);
 const clearPlucks = () => store(() => (window.__plucks = []));
@@ -147,7 +147,7 @@ check(
 
 await chip('Major').click();
 await store(() =>
-  window.__fretscape.store.getState().setChordSpec({
+  window.__fluidfrets.store.getState().setChordSpec({
     rootPc: 0,
     quality: 'major',
     seventh: 'none',
@@ -229,9 +229,9 @@ await page.getByRole('button', { name: /Prev/ }).click();
 check('Prev steps back', (await text('voicing-status')) === status0);
 const total = Number(status0.match(/of (\d+)/)[1]);
 await store(() =>
-  window.__fretscape.store
+  window.__fluidfrets.store
     .getState()
-    .setChordShape(window.__fretscape.store.getState().chordShape, 0),
+    .setChordShape(window.__fluidfrets.store.getState().chordShape, 0),
 );
 await page.getByRole('button', { name: /Prev/ }).click();
 check(
@@ -250,9 +250,9 @@ check('mini diagrams draw dots', opens > 0);
 
 // Swipe on the voicing card.
 await store(() =>
-  window.__fretscape.store
+  window.__fluidfrets.store
     .getState()
-    .setChordShape(window.__fretscape.store.getState().chordShape, 4),
+    .setChordShape(window.__fluidfrets.store.getState().chordShape, 4),
 );
 await settle();
 const card = await page.locator('.voicing-card').boundingBox();
@@ -276,7 +276,7 @@ check(
 );
 
 // ---------------------------------------------------------------- root click
-await store(() => window.__fretscape.store.getState().setChordShape(null, null));
+await store(() => window.__fluidfrets.store.getState().setChordShape(null, null));
 await clearPlucks();
 await marker(0, 8).click(); // the C on the low E string
 await sleep(700);
@@ -525,7 +525,7 @@ check(
     (await shapeOnBoard()) === '',
 );
 await store(() =>
-  window.__fretscape.store.getState().setVoicingRules({
+  window.__fluidfrets.store.getState().setVoicingRules({
     maxStretch: 4,
     maxFingers: 4,
     minStrings: 'auto',
@@ -537,7 +537,7 @@ await store(() =>
 
 // ---------------------------------------------------------------- other tunings
 await store(() => {
-  const s = window.__fretscape.store.getState();
+  const s = window.__fluidfrets.store.getState();
   s.jumpToTuning({ ...s.tuning, name: 'Open G', strings: [38, 43, 50, 55, 59, 62] });
   s.setChordSpec({ ...s.chordSpec, rootPc: 7 });
 });
@@ -548,7 +548,7 @@ check(
   await text('shape-text'),
 );
 await store(() => {
-  const s = window.__fretscape.store.getState();
+  const s = window.__fluidfrets.store.getState();
   s.jumpToTuning({ ...s.tuning, name: 'Standard', strings: [40, 45, 50, 55, 59, 64] });
 });
 await settle();
@@ -561,7 +561,7 @@ check(
 await setChord({ rootPc: 4 });
 await page.getByRole('tab', { name: 'Scales' }).click();
 await store(() =>
-  window.__fretscape.store
+  window.__fluidfrets.store
     .getState()
     .setScaleSettings({ rootPc: 4, scaleId: 'natural-minor', overlay: { kind: 'chord' } }),
 );
@@ -585,11 +585,11 @@ check(
 );
 check(
   'and the strum shape is released outside chord mode',
-  (await store(() => window.__fretscape.store.getState().strumShape)) === null,
+  (await store(() => window.__fluidfrets.store.getState().strumShape)) === null,
 );
 await page.getByRole('tab', { name: 'Chords' }).click();
 await store(() =>
-  window.__fretscape.store.getState().setChordSpec({
+  window.__fluidfrets.store.getState().setChordSpec({
     rootPc: 9,
     quality: 'minor',
     seventh: '7',
@@ -603,7 +603,7 @@ await store(() =>
 );
 await sleep(300);
 await page.reload();
-await page.waitForFunction(() => window.__fretscape);
+await page.waitForFunction(() => window.__fluidfrets);
 await sleep(400);
 check(
   'the chord and mode persist across a reload, and the shape is restored',
@@ -612,7 +612,7 @@ check(
 );
 await page.evaluate(() =>
   localStorage.setItem(
-    'fretscape-settings',
+    'fluid-frets-settings',
     JSON.stringify({
       state: {
         mode: 'chord',
@@ -626,7 +626,7 @@ await page.evaluate(() =>
   ),
 );
 await page.reload();
-await page.waitForFunction(() => window.__fretscape);
+await page.waitForFunction(() => window.__fluidfrets);
 await sleep(300);
 check(
   'an invalid stored chord (power + 7th) falls back to a plain chord on the same root',
@@ -640,7 +640,7 @@ await settle();
 check(
   'Explore mode: notes drawn plainly again, strum shape released',
   (await readBoard()).every((m) => m.role === null && !m.shape) &&
-    (await store(() => window.__fretscape.store.getState().strumShape)) === null,
+    (await store(() => window.__fluidfrets.store.getState().strumShape)) === null,
 );
 
 check('no console or page errors', errors.length === 0, errors.join(' | '));

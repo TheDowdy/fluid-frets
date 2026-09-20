@@ -15,10 +15,10 @@ await page.goto(url);
 
 // Choosing a tuning strums the open strings (Phase 4); switch that off so it can't colour the pitch
 // measurements below, which look at one string at a time.
-await page.evaluate(() => window.__fretscape.store.getState().setStrumOnTuningChange(false));
+await page.evaluate(() => window.__fluidfrets.store.getState().setStrumOnTuningChange(false));
 
-const status = () => page.evaluate(() => window.__fretscape.audioEngine.getStatus());
-const peak = () => page.evaluate(() => window.__fretscape.audioEngine.getOutputPeak());
+const status = () => page.evaluate(() => window.__fluidfrets.audioEngine.getStatus());
+const peak = () => page.evaluate(() => window.__fluidfrets.audioEngine.getOutputPeak());
 const marker = (string, fret) => page.locator(`[data-string="${string}"][data-fret="${fret}"]`);
 const results = [];
 const check = (name, ok, detail = '') => {
@@ -34,7 +34,7 @@ check(
 
 // Open A string (string index 1) — behind the nut.
 await marker(1, 0).click();
-await page.waitForFunction(() => window.__fretscape.audioEngine.getStatus() === 'running', null, {
+await page.waitForFunction(() => window.__fluidfrets.audioEngine.getStatus() === 'running', null, {
   timeout: 5000,
 });
 check('audio unlocks and reaches "running" after a tap', true);
@@ -47,8 +47,8 @@ async function measure(string, fret, expectedHz) {
   await marker(string, fret).click();
   await page.waitForTimeout(120);
   return page.evaluate((expected) => {
-    const x = window.__fretscape.audioEngine.getOutputSnapshot();
-    const sr = window.__fretscape.audioEngine.context.sampleRate;
+    const x = window.__fluidfrets.audioEngine.getOutputSnapshot();
+    const sr = window.__fluidfrets.audioEngine.context.sampleRate;
     const p = sr / expected;
     let best = 0,
       bestV = -Infinity;

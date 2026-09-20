@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import { audioEngine } from '../../audio/engine';
+import { clearSettings } from '../../state/storage';
 import { useStore, type ThemeSetting } from '../../state/store';
 import { selectTuning } from '../../state/tuningActions';
 import { midiToName } from '../../theory/notes';
@@ -166,7 +167,7 @@ export function SettingsDialog({ open, onClose }: Props) {
           type="button"
           className="button"
           disabled={saved.length === 0}
-          onClick={() => downloadText('fretscape-tunings.json', exportTunings(saved))}
+          onClick={() => downloadText('fluid-frets-tunings.json', exportTunings(saved))}
         >
           Export JSON
         </button>
@@ -206,7 +207,7 @@ export function SettingsDialog({ open, onClose }: Props) {
               type="button"
               className="button danger"
               onClick={() => {
-                localStorage.removeItem('fretscape-settings');
+                clearSettings();
                 location.reload();
               }}
             >

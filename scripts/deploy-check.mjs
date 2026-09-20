@@ -9,7 +9,7 @@ import { readFile, stat } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
 import { chromium } from 'playwright-core';
 
-const PREFIX = '/apps/fretscape/';
+const PREFIX = '/apps/fluid-frets/';
 const PORT = 5197;
 const TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -127,17 +127,17 @@ check(
 
 // Audio: the worklet must load from the sub-path.
 await page.locator('[data-string="1"][data-fret="0"]').click();
-await page.waitForFunction(() => window.__fretscape.audioEngine.getStatus() === 'running', null, {
+await page.waitForFunction(() => window.__fluidfrets.audioEngine.getStatus() === 'running', null, {
   timeout: 8000,
 });
 check(
   'the audio worklet loads from the sub-path',
-  (await page.evaluate(() => window.__fretscape.audioEngine.synthEngine)) === 'worklet',
+  (await page.evaluate(() => window.__fluidfrets.audioEngine.synthEngine)) === 'worklet',
 );
 await page.waitForTimeout(200);
 check(
   'and it makes sound',
-  (await page.evaluate(() => window.__fretscape.audioEngine.getOutputPeak())) > 0.02,
+  (await page.evaluate(() => window.__fluidfrets.audioEngine.getOutputPeak())) > 0.02,
 );
 
 // Service worker and offline.
@@ -156,14 +156,14 @@ await page.waitForSelector('.fretboard-svg', { timeout: 8000 });
 check('offline: the app still loads', (await page.locator('[data-string]').count()) > 100);
 await page.goto(base + '?debug');
 await page.locator('[data-string="1"][data-fret="0"]').click();
-await page.waitForFunction(() => window.__fretscape.audioEngine.getStatus() === 'running', null, {
+await page.waitForFunction(() => window.__fluidfrets.audioEngine.getStatus() === 'running', null, {
   timeout: 8000,
 });
 await page.waitForTimeout(250);
 check(
   'offline: sound still works (the worklet was cached)',
-  (await page.evaluate(() => window.__fretscape.audioEngine.getOutputPeak())) > 0.02 &&
-    (await page.evaluate(() => window.__fretscape.audioEngine.synthEngine)) === 'worklet',
+  (await page.evaluate(() => window.__fluidfrets.audioEngine.getOutputPeak())) > 0.02 &&
+    (await page.evaluate(() => window.__fluidfrets.audioEngine.synthEngine)) === 'worklet',
 );
 await context.setOffline(false);
 

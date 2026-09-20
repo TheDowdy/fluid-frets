@@ -1,4 +1,4 @@
-# Fretscape — Alternate Tuning Explorer: Build Plan for Claude Code
+# Fluid Frets — Alternate Tuning Explorer: Build Plan for Claude Code
 
 > **How to use this file:** Put it in an empty project folder, open Claude Code there, and say:
 > *"Read PLAN.md. Implement Phase 0 and Phase 1, run the tests, and stop for my review."*

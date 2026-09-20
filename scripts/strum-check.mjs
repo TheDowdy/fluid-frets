@@ -25,14 +25,14 @@ const sleep = (ms) => page.waitForTimeout(ms);
 
 // Record every pluck the app makes, without changing what it does.
 await page.evaluate(() => {
-  const engine = window.__fretscape.audioEngine;
+  const engine = window.__fluidfrets.audioEngine;
   window.__plucks = [];
   const real = engine.pluck.bind(engine);
   engine.pluck = (string, midi, opts) => {
     window.__plucks.push({ string, midi, ...opts, at: performance.now() });
     return real(string, midi, opts);
   };
-  window.__fretscape.store.getState().setStrumOnTuningChange(false);
+  window.__fluidfrets.store.getState().setStrumOnTuningChange(false);
 });
 const plucks = () => page.evaluate(() => window.__plucks);
 const reset = async () => {
@@ -66,7 +66,7 @@ async function mouseDrag(x, y0, y1, { steps = 14, stepMs = 4 } = {}) {
 
 // Unlock audio with a first tap and wait until it runs.
 await marker(1, 0).click();
-await page.waitForFunction(() => window.__fretscape.audioEngine.getStatus() === 'running', null, {
+await page.waitForFunction(() => window.__fluidfrets.audioEngine.getStatus() === 'running', null, {
   timeout: 5000,
 });
 await reset();
@@ -128,7 +128,7 @@ check(
   JSON.stringify(strings(p)),
 );
 check('mouse: it is a downstroke (no extra tap note, exactly six plucks)', p.length === 6);
-const downPeak = await page.evaluate(() => window.__fretscape.audioEngine.getOutputPeak());
+const downPeak = await page.evaluate(() => window.__fluidfrets.audioEngine.getOutputPeak());
 check('mouse: the strum is audible', downPeak > 0.02, `peak ${downPeak.toFixed(3)}`);
 const down = p;
 await reset();
@@ -207,7 +207,9 @@ await reset();
 }
 
 // ---------------------------------------------------------------- shapes and muting
-await page.evaluate(() => window.__fretscape.store.getState().setStrumShape([null, 3, 2, 0, 1, 0]));
+await page.evaluate(() =>
+  window.__fluidfrets.store.getState().setStrumShape([null, 3, 2, 0, 1, 0]),
+);
 await mouseDrag(x, below, above);
 p = await plucks();
 check(
@@ -230,17 +232,17 @@ check(
 );
 await reset();
 await page.evaluate(() =>
-  window.__fretscape.store.getState().setStrumShape([null, null, null, null, null, null]),
+  window.__fluidfrets.store.getState().setStrumShape([null, null, null, null, null, null]),
 );
 await mouseDrag(x, below, above);
 p = await plucks();
 check('shape: all strings muted → total silence', p.length === 0);
-await page.evaluate(() => window.__fretscape.store.getState().setStrumShape(null));
+await page.evaluate(() => window.__fluidfrets.store.getState().setStrumShape(null));
 await reset();
 
 // ---------------------------------------------------------------- other tunings and left hand
 await page.evaluate(() => {
-  const s = window.__fretscape.store.getState();
+  const s = window.__fluidfrets.store.getState();
   s.jumpToTuning({ ...s.tuning, name: 'Drop D', strings: [38, 45, 50, 55, 59, 64] });
 });
 await mouseDrag(x, below, above);
@@ -251,7 +253,7 @@ check(
   JSON.stringify(p.map((n) => n.midi)),
 );
 await page.evaluate(() => {
-  const s = window.__fretscape.store.getState();
+  const s = window.__fluidfrets.store.getState();
   s.jumpToTuning({ ...s.tuning, name: 'Standard', strings: [40, 45, 50, 55, 59, 64] });
   s.setLeftHanded(true);
 });
@@ -263,7 +265,7 @@ check(
   JSON.stringify(strings(p)) === '[0,1,2,3,4,5]',
   JSON.stringify(strings(p)),
 );
-await page.evaluate(() => window.__fretscape.store.getState().setLeftHanded(false));
+await page.evaluate(() => window.__fluidfrets.store.getState().setLeftHanded(false));
 await reset();
 
 // ---------------------------------------------------------------- visual feedback

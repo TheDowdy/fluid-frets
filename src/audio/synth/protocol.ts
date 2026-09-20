@@ -6,7 +6,7 @@ export type WorkletMessage =
   | { type: 'pitch'; when?: number; id: number; midi: number; rampMs: number }
   | { type: 'damp'; when?: number; id: number };
 
-export const PROCESSOR_NAME = 'fretscape-strings';
+export const PROCESSOR_NAME = 'fluid-frets-strings';
 
 /**
  * Applies a message to a string bank. Times arrive in seconds on the AudioContext clock; a missing

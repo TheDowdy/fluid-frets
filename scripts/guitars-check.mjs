@@ -24,7 +24,7 @@ const sleep = (ms) => page.waitForTimeout(ms);
 const store = (fn, arg) => page.evaluate(fn, arg);
 const state = () =>
   store(() => {
-    const s = window.__fretscape.store.getState();
+    const s = window.__fluidfrets.store.getState();
     return {
       model: s.guitarModel,
       sound: s.soundPreset,
@@ -35,9 +35,9 @@ const state = () =>
     };
   });
 const MODELS = ['steel-acoustic', 'classical', 'double-cut', 'single-cut', 'hollow-body'];
-const setModel = (id) => store((id) => window.__fretscape.store.getState().setGuitarModel(id), id);
+const setModel = (id) => store((id) => window.__fluidfrets.store.getState().setGuitarModel(id), id);
 
-await store(() => window.__fretscape.store.getState().setStrumOnTuningChange(false));
+await store(() => window.__fluidfrets.store.getState().setStrumOnTuningChange(false));
 
 // ---------------------------------------------------------------- the selector
 const options = await page
@@ -119,7 +119,7 @@ for (const leftHanded of [false, true]) {
   for (const frets of [18, 24]) {
     await store(
       ([f, l]) => {
-        const s = window.__fretscape.store.getState();
+        const s = window.__fluidfrets.store.getState();
         s.setFretCount(f);
         s.setLeftHanded(l);
       },
@@ -139,7 +139,7 @@ for (const leftHanded of [false, true]) {
     }
   }
 }
-await store(() => window.__fretscape.store.getState().setLeftHanded(false));
+await store(() => window.__fluidfrets.store.getState().setLeftHanded(false));
 check(
   'every model × {18, 24 frets} × {right, left-handed}: markers and pegs never move when switching',
   !problems.some((p) => p.includes('moved')),
@@ -153,14 +153,14 @@ check(
 
 // Actual clicks play the right notes on each model.
 await store(() => {
-  const engine = window.__fretscape.audioEngine;
+  const engine = window.__fluidfrets.audioEngine;
   window.__plucks = [];
   const real = engine.pluck.bind(engine);
   engine.pluck = (string, midi, opts) => {
     window.__plucks.push({ string, midi });
     return real(string, midi, opts);
   };
-  window.__fretscape.store.getState().setFretCount(22);
+  window.__fluidfrets.store.getState().setFretCount(22);
 });
 let clickOk = true;
 for (const id of MODELS) {
@@ -295,7 +295,7 @@ check('and so does pressing outside it', !(await pop.isVisible().catch(() => fal
 
 // ---------------------------------------------------------------- match sound and fret defaults
 await store(() => {
-  const s = window.__fretscape.store.getState();
+  const s = window.__fluidfrets.store.getState();
   s.setCustomise({ wood: null, inlay: null, finish: null });
   s.setFretCountUserSet(false);
   s.setMatchSound(true);
@@ -349,12 +349,12 @@ check(
   (await state()).sound === 'classical' && (await state()).model === 'single-cut',
   JSON.stringify(await state()),
 );
-await store(() => window.__fretscape.store.getState().setMatchSound(true));
+await store(() => window.__fluidfrets.store.getState().setMatchSound(true));
 
 // ---------------------------------------------------------------- legibility on a pale board
 await setModel('double-cut');
 await store(() => {
-  const s = window.__fretscape.store.getState();
+  const s = window.__fluidfrets.store.getState();
   s.setMode('scale');
   s.setScaleSettings({ rootPc: 4, scaleId: 'minor-pentatonic' });
 });
@@ -395,38 +395,38 @@ const dark = await page.evaluate(() =>
   document.querySelector('.markers [data-role="out"] .marker-dot')?.getAttribute('stroke'),
 );
 check('dark board: cream outlines as before', dark === '#f2ead3', dark);
-await store(() => window.__fretscape.store.getState().setMode('explore'));
+await store(() => window.__fluidfrets.store.getState().setMode('explore'));
 
 // ---------------------------------------------------------------- switching leaves everything else alone
 await store(() => {
-  const s = window.__fretscape.store.getState();
+  const s = window.__fluidfrets.store.getState();
   s.jumpToTuning({ ...s.tuning, name: 'Drop D', strings: [38, 45, 50, 55, 59, 64] });
 });
 const tuningBefore = await store(() =>
-  JSON.stringify(window.__fretscape.store.getState().tuning.strings),
+  JSON.stringify(window.__fluidfrets.store.getState().tuning.strings),
 );
 for (const id of MODELS) await setModel(id);
 check(
   'switching guitar leaves the tuning alone',
-  (await store(() => JSON.stringify(window.__fretscape.store.getState().tuning.strings))) ===
+  (await store(() => JSON.stringify(window.__fluidfrets.store.getState().tuning.strings))) ===
     tuningBefore,
 );
 check('and all six pegs are still there', (await page.locator('[data-peg]').count()) === 6);
 await store(() => {
-  const s = window.__fretscape.store.getState();
+  const s = window.__fluidfrets.store.getState();
   s.jumpToTuning({ ...s.tuning, name: 'Standard', strings: [40, 45, 50, 55, 59, 64] });
 });
 
 // ---------------------------------------------------------------- persistence
 await setModel('hollow-body');
 await store(() =>
-  window.__fretscape.store
+  window.__fluidfrets.store
     .getState()
     .setCustomise({ wood: 'maple', inlay: 'dots', finish: '#2f5d3a' }),
 );
 await sleep(200);
 await page.reload();
-await page.waitForFunction(() => window.__fretscape);
+await page.waitForFunction(() => window.__fluidfrets);
 await sleep(300);
 st = await state();
 check(
@@ -438,7 +438,7 @@ check(
 );
 await page.evaluate(() =>
   localStorage.setItem(
-    'fretscape-settings',
+    'fluid-frets-settings',
     JSON.stringify({
       state: {
         guitarModel: 'banjo',
@@ -450,7 +450,7 @@ await page.evaluate(() =>
   ),
 );
 await page.reload();
-await page.waitForFunction(() => window.__fretscape);
+await page.waitForFunction(() => window.__fluidfrets);
 await sleep(300);
 st = await state();
 check(
