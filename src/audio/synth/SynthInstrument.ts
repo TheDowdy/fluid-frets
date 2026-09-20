@@ -74,6 +74,7 @@ export class SynthInstrument implements Instrument {
 
   pluck(string: number, midi: number, opts: PluckOptions = {}): VoiceHandle {
     const velocity = Math.min(1, Math.max(0, opts.velocity ?? 0.8));
+    const brightness = Math.min(1, Math.max(0, opts.brightness ?? 0));
     const preset = getSoundPreset(this.presetId).string;
     const freq = midiToFreq(midi);
     const id = this.nextId++;
@@ -86,10 +87,9 @@ export class SynthInstrument implements Instrument {
       // Spread strings gently across the stereo field, low strings left.
       pan: ((string / (STRING_COUNT - 1)) * 2 - 1) * 0.3,
       excitation: {
-        lowpass: Math.min(
-          0.97,
-          preset.pluckLowpass + (1 - velocity) * preset.velocitySoftening * 1.5,
-        ),
+        lowpass:
+          Math.min(0.97, preset.pluckLowpass + (1 - velocity) * preset.velocitySoftening * 1.5) *
+          (1 - 0.4 * brightness),
         pick: preset.pickPosition,
         level: 0.2 + 0.8 * velocity,
       },

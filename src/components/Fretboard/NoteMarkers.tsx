@@ -1,4 +1,5 @@
-import { memo } from 'react';
+import { memo, useEffect, useRef } from 'react';
+import { onPluck } from '../../state/pluckEvents';
 import { useStore } from '../../state/store';
 import { edgeOpacity, slidingNotes } from '../../theory/fretboard';
 import { formatNoteName, pitchClass, type Spelling } from '../../theory/notes';
@@ -63,7 +64,14 @@ const StringMarkers = memo(function StringMarkers({
             data-midi={midi}
             pointerEvents={onFret ? undefined : 'none'}
           >
-            <circle cx={cx} cy={cy} r={r} fill={skin.markerFill} stroke="rgba(0,0,0,0.5)" />
+            <circle
+              cx={cx}
+              cy={cy}
+              r={r}
+              fill={skin.markerFill}
+              stroke="rgba(0,0,0,0.5)"
+              style={{ transformBox: 'fill-box', transformOrigin: 'center' }}
+            />
             <text
               x={cx}
               y={cy}
@@ -86,26 +94,46 @@ interface Props {
   spaces: readonly number[];
   spelling: Spelling;
   leftHanded: boolean;
-  /** Called on press with the string (0 = lowest) and fret (0 = open). */
-  onPlay?: (string: number, fret: number) => void;
 }
 
 /** A circle + label in every fret space, and one per string behind the nut for the open note. */
-export function NoteMarkers({ onPlay, ...rest }: Props) {
+export function NoteMarkers(props: Props) {
+  const ref = useRef<SVGGElement>(null);
+
+  // Pulse the marker of any note that sounds, whether tapped or strummed.
+  useEffect(
+    () =>
+      onPluck(({ string, fret }) => {
+        if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        ref.current
+          ?.querySelector(`[data-string="${string}"][data-fret="${fret}"] circle`)
+          ?.animate(
+            [{ transform: 'scale(1)' }, { transform: 'scale(1.3)' }, { transform: 'scale(1)' }],
+            { duration: 380, easing: 'ease-out' },
+          );
+      }),
+    [],
+  );
+
+  const { fretCount, centres, spaces, spelling, leftHanded } = props;
   return (
     <g
+      ref={ref}
       textAnchor="middle"
       dominantBaseline="central"
       fontFamily="system-ui, sans-serif"
       className="markers"
-      onPointerDown={(e) => {
-        const target = (e.target as Element).closest<SVGGElement>('[data-string]');
-        if (!target || !onPlay) return;
-        onPlay(Number(target.dataset.string), Number(target.dataset.fret));
-      }}
     >
       {Array.from({ length: STRING_COUNT }, (_, string) => (
-        <StringMarkers key={string} string={string} {...rest} />
+        <StringMarkers
+          key={string}
+          string={string}
+          fretCount={fretCount}
+          centres={centres}
+          spaces={spaces}
+          spelling={spelling}
+          leftHanded={leftHanded}
+        />
       ))}
     </g>
   );

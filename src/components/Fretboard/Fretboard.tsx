@@ -1,6 +1,6 @@
-import { useCallback, useMemo, useRef } from 'react';
-import { audioEngine } from '../../audio/engine';
+import { useMemo, useRef } from 'react';
 import { useElementWidth } from '../../hooks/useElementWidth';
+import { useStrumGestures } from '../../hooks/useStrumGestures';
 import { useStore } from '../../state/store';
 import { chromaticSpelling } from '../../theory/notes';
 import { TuningPeg } from '../TuningPeg/TuningPeg';
@@ -37,13 +37,7 @@ export function Fretboard() {
   const spaces = useMemo(() => fretSpaceWidths(wires), [wires]);
   const spelling = useMemo(() => chromaticSpelling(pref), [pref]);
 
-  const play = useCallback(
-    (string: number, fret: number) => {
-      const open = tuning.strings[string];
-      if (open !== undefined) audioEngine.pluck(string, open + fret);
-    },
-    [tuning.strings],
-  );
+  const strumHandlers = useStrumGestures();
 
   // Board graphics are drawn right-handed and flipped as a group; text is positioned
   // with mirrored coordinates so it never appears mirrored.
@@ -58,6 +52,7 @@ export function Fretboard() {
           viewBox={`0 0 ${totalWidth} ${totalHeight}`}
           role="img"
           aria-label={`${tuning.name} tuning, ${fretCount} frets`}
+          {...strumHandlers}
         >
           <g transform={flip}>
             <Neck />
@@ -71,7 +66,6 @@ export function Fretboard() {
             centres={centres}
             spaces={spaces}
             leftHanded={leftHanded}
-            onPlay={play}
           />
           {Array.from({ length: STRING_COUNT }, (_, i) => (
             <TuningPeg key={i} string={i} leftHanded={leftHanded} />

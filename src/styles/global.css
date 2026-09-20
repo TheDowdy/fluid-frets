@@ -108,6 +108,8 @@ body {
   height: auto;
   user-select: none;
   -webkit-user-select: none;
+  /* Vertical drags are strums; horizontal ones still scroll the neck on a portrait phone. */
+  touch-action: pan-x;
 }
 .rotate-hint {
   display: none;
@@ -206,7 +208,6 @@ body {
 }
 .markers {
   cursor: pointer;
-  touch-action: manipulation;
 }
 
 /* Tuning pegs (Phase 4) */

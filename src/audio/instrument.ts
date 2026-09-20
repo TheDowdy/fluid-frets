@@ -13,6 +13,8 @@ export interface VoiceHandle {
 export interface PluckOptions {
   /** 0–1, default 0.8. */
   velocity?: number;
+  /** 0–1, default 0. Brightens the attack without making it louder (upstrokes use this). */
+  brightness?: number;
   /** AudioContext time in seconds; default = now. */
   when?: number;
 }

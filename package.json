@@ -13,7 +13,8 @@
     "format": "prettier --write .",
     "check:audio": "node scripts/audio-check.mjs",
     "check:app": "node scripts/app-check.mjs",
-    "check:pegs": "node scripts/pegs-check.mjs"
+    "check:pegs": "node scripts/pegs-check.mjs",
+    "check:strum": "node scripts/strum-check.mjs"
   },
   "dependencies": {
     "react": "^18.3.1",

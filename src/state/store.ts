@@ -32,6 +32,12 @@ export interface AppState {
   /** 0–1 slider position (perceptual curve is applied by the audio engine). */
   volume: number;
   muted: boolean;
+  /**
+   * Frets per string (null = muted) that a strum sounds instead of the open strings. Set by the
+   * chord voicing (Phase 7) and open-selection (Phase 8) features; null = strum the open strings.
+   * Not persisted.
+   */
+  strumShape: (number | null)[] | null;
 
   /** Sets the committed tuning without touching `liveTuning` (callers animate it). */
   setTuning: (tuning: Tuning) => void;
@@ -48,6 +54,7 @@ export interface AppState {
   setSoundPreset: (id: SoundPresetId) => void;
   setVolume: (volume: number) => void;
   setMuted: (muted: boolean) => void;
+  setStrumShape: (shape: (number | null)[] | null) => void;
 }
 
 /** The subset written to localStorage. Transient drawing state is deliberately left out. */
@@ -81,6 +88,7 @@ export const useStore = create<AppState>()(
       soundPreset: 'acoustic',
       volume: 0.8,
       muted: false,
+      strumShape: null,
 
       setTuning: (tuning) => set({ tuning }),
       jumpToTuning: (tuning) => set({ tuning, liveTuning: [...tuning.strings] }),
@@ -101,6 +109,7 @@ export const useStore = create<AppState>()(
       setSoundPreset: (soundPreset) => set({ soundPreset }),
       setVolume: (volume) => set({ volume: Math.min(1, Math.max(0, volume)) }),
       setMuted: (muted) => set({ muted }),
+      setStrumShape: (strumShape) => set({ strumShape }),
     }),
     {
       name: 'fretscape-settings',
