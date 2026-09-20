@@ -1,6 +1,7 @@
 import { useMemo, useRef } from 'react';
 import { useElementWidth } from '../../hooks/useElementWidth';
 import { useDisplay } from '../../hooks/useDisplay';
+import { useFretKeyboard } from '../../hooks/useFretKeyboard';
 import { useGuitarSkin } from '../../hooks/useGuitarSkin';
 import { useStrumGestures } from '../../hooks/useStrumGestures';
 import { useStore } from '../../state/store';
@@ -10,6 +11,10 @@ import { Frets } from './Frets';
 import {
   boardHeight,
   fretCentreXs,
+  interpolateAtFret,
+  interpolateClamped,
+  markerRadius,
+  stringY,
   fretSpaceWidths,
   fretWireXs,
   mirrorX,
@@ -43,7 +48,9 @@ export function Fretboard() {
   // In a key or chord, notes are spelled for it (B♭ in F major); otherwise by the ♯/♭ preference.
   const spelling = display?.spelling ?? exploreSpelling;
 
+  const keyboard = useFretKeyboard({ fretCount, leftHanded, spelling });
   const strumHandlers = useStrumGestures();
+  const largeNeck = useStore((s) => s.largeNeck);
 
   // Board graphics are drawn right-handed and flipped as a group; text is positioned
   // with mirrored coordinates so it never appears mirrored.
@@ -56,9 +63,12 @@ export function Fretboard() {
         <svg
           className="fretboard-svg"
           viewBox={`0 0 ${totalWidth} ${totalHeight}`}
-          role="img"
-          aria-label={`${tuning.name} tuning, ${fretCount} frets`}
+          role="application"
+          aria-label={`Guitar fretboard, ${tuning.name} tuning, ${fretCount} frets. Arrow keys move between notes, Enter plays one, Shift and Enter strums.`}
+          data-large={largeNeck || undefined}
+          tabIndex={0}
           {...strumHandlers}
+          {...keyboard.handlers}
         >
           <g transform={flip}>
             <Neck skin={guitar} />
@@ -66,6 +76,19 @@ export function Fretboard() {
             <Frets wires={wires} skin={guitar} />
             <Strings skin={guitar} />
           </g>
+          {keyboard.focused && keyboard.cursor && (
+            <circle
+              className="fret-cursor"
+              cx={mirrorX(interpolateAtFret(centres, keyboard.cursor.fret), leftHanded)}
+              cy={stringY(keyboard.cursor.string)}
+              r={markerRadius(interpolateClamped(spaces, keyboard.cursor.fret)) + 4}
+              fill="none"
+              stroke="#ffd23f"
+              strokeWidth={3}
+              strokeDasharray="5 3"
+              pointerEvents="none"
+            />
+          )}
           <NoteMarkers
             fretCount={fretCount}
             spelling={spelling}
@@ -93,6 +116,9 @@ export function Fretboard() {
           </g>
         </svg>
       </div>
+      <p className="sr-only" role="status" aria-live="polite">
+        {keyboard.announcement}
+      </p>
     </section>
   );
 }

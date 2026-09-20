@@ -42,6 +42,9 @@ export const MAX_FRETS = 24;
 /** 'auto' = realistic spacing on wide screens, even spacing below 900 px (§4). */
 export type FretSpacing = 'auto' | 'realistic' | 'even';
 
+/** Colour scheme: follow the operating system, or force one. */
+export type ThemeSetting = 'system' | 'dark' | 'light';
+
 /** Which panel is open: chromatic exploring, a key/scale overlay, a chord, or identifying a shape. */
 export type AppMode = 'explore' | 'scale' | 'chord' | 'identify';
 
@@ -58,6 +61,9 @@ export interface AppState {
   accidentalPref: AccidentalPref;
   leftHanded: boolean;
   fretSpacing: FretSpacing;
+  theme: ThemeSetting;
+  /** Draw the neck large (scrolling sideways on small screens) so strings and pegs are ≥ 40 px apart. */
+  largeNeck: boolean;
   /** Lifts the −7/+5 semitone limit per string (§0). */
   unlimitedRange: boolean;
   /** Soft strum of the new open strings after choosing a tuning from the list (§6). */
@@ -120,6 +126,8 @@ export interface AppState {
   setLeftHanded: (leftHanded: boolean) => void;
   setFretSpacing: (spacing: FretSpacing) => void;
   setUnlimitedRange: (unlimited: boolean) => void;
+  setTheme: (theme: ThemeSetting) => void;
+  setLargeNeck: (large: boolean) => void;
   setStrumOnTuningChange: (strum: boolean) => void;
   setSoundPreset: (id: SoundPresetId) => void;
   setGuitarModel: (id: GuitarModelId) => void;
@@ -156,6 +164,8 @@ type Persisted = Pick<
   | 'leftHanded'
   | 'fretSpacing'
   | 'unlimitedRange'
+  | 'theme'
+  | 'largeNeck'
   | 'strumOnTuningChange'
   | 'soundPreset'
   | 'guitarModel'
@@ -185,6 +195,8 @@ export const useStore = create<AppState>()(
       leftHanded: false,
       fretSpacing: 'auto',
       unlimitedRange: false,
+      theme: 'system',
+      largeNeck: false,
       strumOnTuningChange: true,
       soundPreset: 'acoustic',
       guitarModel: DEFAULT_MODEL_ID,
@@ -225,6 +237,8 @@ export const useStore = create<AppState>()(
       setLeftHanded: (leftHanded) => set({ leftHanded }),
       setFretSpacing: (fretSpacing) => set({ fretSpacing }),
       setUnlimitedRange: (unlimitedRange) => set({ unlimitedRange }),
+      setTheme: (theme) => set({ theme }),
+      setLargeNeck: (largeNeck) => set({ largeNeck }),
       setStrumOnTuningChange: (strumOnTuningChange) => set({ strumOnTuningChange }),
       setSoundPreset: (soundPreset) => set({ soundPreset }),
       setGuitarModel: (guitarModel) => set({ guitarModel }),
@@ -262,6 +276,8 @@ export const useStore = create<AppState>()(
         leftHanded: s.leftHanded,
         fretSpacing: s.fretSpacing,
         unlimitedRange: s.unlimitedRange,
+        theme: s.theme,
+        largeNeck: s.largeNeck,
         strumOnTuningChange: s.strumOnTuningChange,
         soundPreset: s.soundPreset,
         guitarModel: s.guitarModel,
@@ -287,6 +303,8 @@ export const useStore = create<AppState>()(
           ...current,
           ...p,
           tuning,
+          theme: p.theme === 'dark' || p.theme === 'light' ? p.theme : 'system',
+          largeNeck: p.largeNeck === true,
           guitarModel: isGuitarModelId(p.guitarModel) ? p.guitarModel : DEFAULT_MODEL_ID,
           customise: sanitizeCustomise(p.customise),
           matchSound: p.matchSound !== false,

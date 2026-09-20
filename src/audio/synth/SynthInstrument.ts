@@ -4,18 +4,31 @@ import type { Instrument, PluckOptions, SoundPresetId, VoiceHandle } from '../in
 import { DEFAULT_PRESET_ID, getSoundPreset } from './presets';
 import type { PluckParams } from './stringDsp';
 import workletUrl from './string-worklet.ts?worker&url';
-import { PROCESSOR_NAME, type WorkletMessage } from './protocol';
+import { applyWorkletMessage, PROCESSOR_NAME, type WorkletMessage } from './protocol';
+import { StringBank } from './stringDsp';
 
 const STRING_COUNT = 6;
 /** Max random detune per pluck, in cents (±). */
 const DETUNE_CENTS = 1.5;
 
+/** Frames per ScriptProcessor callback: ~23 ms at 44.1 kHz, a compromise between latency and glitches. */
+const FALLBACK_BUFFER = 1024;
+
+export type SynthEngine = 'worklet' | 'script-processor';
+
 /**
  * Physical-model string synth: one polyphonic AudioWorklet (see stringDsp.ts) feeding a
  * per-preset effect chain. Messages sent before the worklet has loaded are queued.
+ *
+ * AudioWorklet needs a secure context (https or localhost). Where it is missing — such as a page
+ * served over plain http on a LAN — the same string model runs in a ScriptProcessorNode on the
+ * main thread instead: a little more latency, and it can glitch if the page is busy, but it plays.
  */
 export class SynthInstrument implements Instrument {
-  private node: AudioWorkletNode | null = null;
+  private node: AudioNode | null = null;
+  private post: ((m: WorkletMessage) => void) | null = null;
+  /** Which engine is producing sound. */
+  engine: SynthEngine = 'worklet';
   private queue: WorkletMessage[] = [];
   private chain: EffectChain | null = null;
   private presetId: SoundPresetId = DEFAULT_PRESET_ID;
@@ -26,29 +39,57 @@ export class SynthInstrument implements Instrument {
   constructor(
     private readonly ctx: BaseAudioContext,
     private readonly destination: AudioNode,
+    /** Force the ScriptProcessor fallback (testing, or a browser with a broken AudioWorklet). */
+    private readonly forceFallback = false,
   ) {
     this.applyPreset();
     this.ready = this.load();
   }
 
   private async load(): Promise<void> {
-    if (!this.ctx.audioWorklet) {
-      throw new Error('AudioWorklet is unavailable (needs a secure context: https or localhost).');
+    if (this.forceFallback || !this.ctx.audioWorklet) {
+      this.loadFallback();
+      return;
     }
-    await this.ctx.audioWorklet.addModule(workletUrl);
+    try {
+      await this.ctx.audioWorklet.addModule(workletUrl);
+    } catch {
+      // Some browsers expose audioWorklet but refuse to load it (blocked, or unsupported syntax).
+      this.loadFallback();
+      return;
+    }
     const node = new AudioWorkletNode(this.ctx, PROCESSOR_NAME, {
       numberOfInputs: 0,
       numberOfOutputs: 1,
       outputChannelCount: [2],
     });
+    this.attach(node, (m) => node.port.postMessage(m));
+  }
+
+  /** The same string model, run on the main thread in a ScriptProcessorNode. */
+  private loadFallback(): void {
+    const ctx = this.ctx as AudioContext;
+    const bank = new StringBank(ctx.sampleRate);
+    const node = ctx.createScriptProcessor(FALLBACK_BUFFER, 0, 2);
+    node.onaudioprocess = (e) => {
+      const left = e.outputBuffer.getChannelData(0);
+      const right = e.outputBuffer.numberOfChannels > 1 ? e.outputBuffer.getChannelData(1) : left;
+      bank.process(left, right, left.length, Math.round(e.playbackTime * ctx.sampleRate));
+    };
+    this.engine = 'script-processor';
+    this.attach(node, (m) => applyWorkletMessage(bank, m, ctx.sampleRate));
+  }
+
+  private attach(node: AudioNode, post: (m: WorkletMessage) => void): void {
     if (this.chain) node.connect(this.chain.input);
     this.node = node;
-    for (const m of this.queue) node.port.postMessage(m);
+    this.post = post;
+    for (const m of this.queue) post(m);
     this.queue = [];
   }
 
   private send(message: WorkletMessage): void {
-    if (this.node) this.node.port.postMessage(message);
+    if (this.post) this.post(message);
     else this.queue.push(message);
   }
 

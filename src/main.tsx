@@ -15,3 +15,12 @@ createRoot(document.getElementById('root')!).render(
 if (import.meta.env.DEV || new URLSearchParams(location.search).has('debug')) {
   (window as unknown as { __fretscape: unknown }).__fretscape = { audioEngine, store: useStore };
 }
+
+// Offline support: a small service worker in production builds (it needs https or localhost).
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {
+      // Not fatal: the app simply works online only.
+    });
+  });
+}

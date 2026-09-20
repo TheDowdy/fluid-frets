@@ -1,4 +1,4 @@
-import { PROCESSOR_NAME, type WorkletMessage } from './protocol';
+import { applyWorkletMessage, PROCESSOR_NAME, type WorkletMessage } from './protocol';
 import { StringBank } from './stringDsp';
 
 class StringProcessor extends AudioWorkletProcessor {
@@ -6,15 +6,8 @@ class StringProcessor extends AudioWorkletProcessor {
 
   constructor() {
     super();
-    this.port.onmessage = (e: MessageEvent<WorkletMessage>) => {
-      const m = e.data;
-      // Times arrive in seconds on the AudioContext clock; missing/past times play immediately.
-      const frame = (when: number | undefined) =>
-        when === undefined ? 0 : Math.round(when * sampleRate);
-      if (m.type === 'pluck') this.bank.pluck(frame(m.params.when), m.params);
-      else if (m.type === 'pitch') this.bank.setPitch(frame(m.when), m.id, m.midi, m.rampMs);
-      else this.bank.damp(frame(m.when), m.id);
-    };
+    this.port.onmessage = (e: MessageEvent<WorkletMessage>) =>
+      applyWorkletMessage(this.bank, e.data, sampleRate);
   }
 
   process(_inputs: Float32Array[][], outputs: Float32Array[][]): boolean {

@@ -6,12 +6,14 @@ import { Toolbar } from './components/Toolbar/Toolbar';
 import { useAudioSync } from './hooks/useAudioSync';
 import { useChordSelection } from './hooks/useChordSelection';
 import { useIdentifySync } from './hooks/useIdentifySync';
+import { useTheme } from './hooks/useTheme';
 import { useAudioUnlock } from './hooks/useAudioUnlock';
 
 export default function App() {
   useAudioSync();
   useChordSelection();
   useIdentifySync();
+  useTheme();
   useAudioUnlock();
   return (
     <div className="app">

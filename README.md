@@ -3,7 +3,9 @@
 A web app for finding and hearing chords and scales in alternate guitar tunings. See
 [PLAN.md](./PLAN.md) for the full build plan and phase list.
 
-**Status:** Phases 0–4 complete (scaffold, theory core, static fretboard, audio engine, tuning pegs).
+**Status:** all ten build phases are complete. See [ARCHITECTURE.md](./ARCHITECTURE.md) for how it
+fits together and [docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md) for hosting (local, Vercel/Netlify,
+Docker / Synology).
 
 ## Run it
 
@@ -22,13 +24,22 @@ Browser checks (need Google Chrome; they drive it with `playwright-core`). Start
 on port 5199 first (`npm run dev -- --port 5199`):
 
 ```bash
-npm run check:audio   # renders every sound preset offline through the real worklet: pitch, level, tone
-npm run check:app     # clicks through the real app: unlock, pitch, mute, presets, volume, rapid taps
-npm run check:pegs    # real mouse + touch on the tuning pegs: glide, snap, limits, wheel, keys, save/import
+npm run check:audio     # every sound preset rendered offline through the real worklet
+npm run check:app       # unlock, pitch, mute, presets, volume, rapid taps
+npm run check:pegs      # real mouse + touch on the tuning pegs
+npm run check:strum     # strumming: order, direction, velocity, muted strings, touch
+npm run check:scales    # scales, colours, overlays, playback timing
+npm run check:chords    # chord builder, voicings, editing, filters
+npm run check:identify  # picking notes and naming the chord
+npm run check:guitars   # every guitar model at 18/24 frets, left-handed, customising
+npm run check:fallback  # the ScriptProcessor engine used where AudioWorklet is missing
+npm run check:a11y      # axe-core across tabs and themes, plus keyboard use
+npm run check:perf      # frame times under CPU throttling (needs the preview server on 5198)
+npm run check:deploy    # the built app served from a sub-path, CSP, offline (run npm run build first)
 ```
 
-`check:app` also works on the production build: `npm run build && npm run preview -- --port 5198`
-then `URL='http://localhost:5198/?debug' npm run check:app`.
+The checks marked "preview" also work on the production build:
+`npm run build && npx vite preview --port 5198`, then `URL='http://localhost:5198/?debug' npm run check:app`.
 
 Coverage of the theory engine: `npx vitest run --coverage`.
 
@@ -51,9 +62,12 @@ store's `liveTuning` holds the fractional pitch being drawn while `tuning` holds
 Saved tunings live in `localStorage` and can be exported/imported as JSON from Settings.
 
 **Sound notes:** browsers only start audio after a tap or click, so a "Tap to enable sound" banner
-shows until then. iPhones in silent mode may mute web audio. The synth needs an AudioWorklet, which
-requires a secure context (https or localhost); the ScriptProcessor fallback for plain-http hosting
-is planned for Phase 10.
+shows until then. iPhones in silent mode may mute web audio. The synth uses an AudioWorklet, which
+needs https or localhost; on a plain-http page it falls back automatically to the same string model
+in a ScriptProcessorNode (slightly more latency). Settings → About shows which engine is running.
+
+**Keyboard:** Tab to the neck, then the arrow keys move a cursor across the notes, Enter plays or
+picks the note (it does what a tap does in the current tab), and Shift + Enter strums.
 
 - `src/state/store.ts` — Zustand store (persisted to `localStorage`).
 - `tests/` — Vitest tests.

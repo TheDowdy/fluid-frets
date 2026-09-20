@@ -1,18 +1,32 @@
 :root {
-  color-scheme: dark light;
+  color-scheme: dark;
   --bg: #16181d;
   --fg: #e8e6e1;
   --panel: #20242b;
   --border: #3a404a;
   --accent: #e0a458;
+  /* Text on the accent colour. */
+  --on-accent: #1a1206;
+}
+/* Light: chosen explicitly, or by the operating system when the theme is "system". */
+:root[data-theme='light'] {
+  color-scheme: light;
+  --bg: #f5f2ec;
+  --fg: #1d1f24;
+  --panel: #e9e4da;
+  --border: #c8c0b0;
+  --accent: #94540f;
+  --on-accent: #ffffff;
 }
 @media (prefers-color-scheme: light) {
-  :root {
+  :root:not([data-theme]) {
+    color-scheme: light;
     --bg: #f5f2ec;
     --fg: #1d1f24;
     --panel: #e9e4da;
     --border: #c8c0b0;
-    --accent: #a8641a;
+    --accent: #94540f;
+    --on-accent: #ffffff;
   }
 }
 
@@ -184,7 +198,7 @@ body {
 }
 .button[aria-pressed='true'] {
   background: var(--accent);
-  color: #1a1206;
+  color: var(--on-accent);
   border-color: var(--accent);
 }
 .banner {
@@ -194,7 +208,7 @@ body {
   font: inherit;
   font-size: 0.95rem;
   text-align: center;
-  color: #1a1206;
+  color: var(--on-accent);
   background: var(--accent);
   border: 0;
   cursor: pointer;
@@ -277,7 +291,7 @@ body {
   border-radius: 6px;
 }
 .button.primary {
-  color: #1a1206;
+  color: var(--on-accent);
   background: var(--accent);
   border-color: var(--accent);
 }
@@ -456,7 +470,7 @@ body {
   cursor: pointer;
 }
 .chip[aria-pressed='true'] {
-  color: #1a1206;
+  color: var(--on-accent);
   background: var(--accent);
   border-color: var(--accent);
 }
@@ -624,4 +638,33 @@ body {
   border-color: var(--accent);
   outline: 2px solid var(--accent);
   outline-offset: 2px;
+}
+
+/* Phase 10: accessibility, large neck */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+.fretboard-svg:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+/* A neck drawn at least 1620 px wide puts the strings (and the pegs) 40 px apart, the touch-target
+   minimum; on a narrower screen it scrolls sideways. */
+.fretboard-svg[data-large='true'] {
+  min-width: 1620px;
+}
+.reset-confirm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
 }

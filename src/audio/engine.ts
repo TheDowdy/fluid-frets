@@ -1,5 +1,5 @@
 import type { Instrument, PluckOptions, SoundPresetId, VoiceHandle } from './instrument';
-import { SynthInstrument } from './synth/SynthInstrument';
+import { SynthInstrument, type SynthEngine } from './synth/SynthInstrument';
 import { volumeToGain } from './volume';
 
 export type EngineStatus =
@@ -10,6 +10,11 @@ export type EngineStatus =
   /** Created but not allowed to run (autoplay policy, iOS interruption, tab hidden…). */
   | 'suspended'
   | 'unsupported';
+
+/** `?noworklet` in the URL forces the compatibility (ScriptProcessor) engine, for testing. */
+function forceFallbackEngine(): boolean {
+  return typeof location !== 'undefined' && new URLSearchParams(location.search).has('noworklet');
+}
 
 /** Master bus: gain (volume / mute) → soft limiter → speakers. Shared with offline tests. */
 export function createMasterBus(ctx: BaseAudioContext): {
@@ -38,6 +43,7 @@ export class AudioEngine {
   private master: GainNode | null = null;
   private analyser: AnalyserNode | null = null;
   private instrument: Instrument | null = null;
+  private synth: SynthInstrument | null = null;
   private status: EngineStatus = 'idle';
   private detail = '';
   private readonly listeners = new Set<() => void>();
@@ -45,6 +51,11 @@ export class AudioEngine {
   private volume = 0.8;
   private muted = false;
   private presetId: SoundPresetId = 'acoustic';
+
+  /** Which synthesis engine is running: the AudioWorklet, or the ScriptProcessor fallback. */
+  get synthEngine(): SynthEngine | null {
+    return this.synth?.engine ?? null;
+  }
 
   /** The AudioContext, if created (useful for scheduling and tests). */
   get context(): AudioContext | null {
@@ -105,9 +116,10 @@ export class AudioEngine {
     this.applyVolume();
     ctx.onstatechange = () => this.syncState();
 
-    const synth = new SynthInstrument(ctx, master);
+    const synth = new SynthInstrument(ctx, master, forceFallbackEngine());
     synth.setPreset(this.presetId);
     this.instrument = synth;
+    this.synth = synth;
     this.setStatus('loading');
     synth.ready.then(
       () => this.syncState(),

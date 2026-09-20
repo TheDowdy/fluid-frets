@@ -1,0 +1,10 @@
+# Run:  docker compose up -d --build     then open http://localhost:8080
+# On a Synology NAS: Container Manager → Project → Create, and point it at this folder.
+services:
+  fretscape:
+    build: .
+    image: fretscape:latest
+    container_name: fretscape
+    ports:
+      - "8080:8080"
+    restart: unless-stopped

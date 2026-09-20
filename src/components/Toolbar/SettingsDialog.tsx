@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
-import { useStore } from '../../state/store';
+import { audioEngine } from '../../audio/engine';
+import { useStore, type ThemeSetting } from '../../state/store';
 import { selectTuning } from '../../state/tuningActions';
 import { midiToName } from '../../theory/notes';
 import {
@@ -32,8 +33,17 @@ export function SettingsDialog({ open, onClose }: Props) {
   const saved = useStore((s) => s.savedTunings);
   const pref = useStore((s) => s.accidentalPref);
   const palette = useStore((s) => s.palette);
-  const { setUnlimitedRange, setStrumOnTuningChange, setSavedTunings, setPalette } =
-    useStore.getState();
+  const theme = useStore((s) => s.theme);
+  const largeNeck = useStore((s) => s.largeNeck);
+  const [confirmReset, setConfirmReset] = useState(false);
+  const {
+    setUnlimitedRange,
+    setStrumOnTuningChange,
+    setSavedTunings,
+    setPalette,
+    setTheme,
+    setLargeNeck,
+  } = useStore.getState();
   const [message, setMessage] = useState<{ text: string; error: boolean } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -74,6 +84,22 @@ export function SettingsDialog({ open, onClose }: Props) {
 
   return (
     <Dialog open={open} title="Settings" onClose={onClose}>
+      <label className="field">
+        <span>Theme</span>
+        <select value={theme} onChange={(e) => setTheme(e.target.value as ThemeSetting)}>
+          <option value="system">Follow my device</option>
+          <option value="dark">Dark</option>
+          <option value="light">Light</option>
+        </select>
+      </label>
+      <label className="check">
+        <input
+          type="checkbox"
+          checked={largeNeck}
+          onChange={(e) => setLargeNeck(e.target.checked)}
+        />
+        <span>Large neck for touch (scrolls sideways; strings and pegs 40 px apart)</span>
+      </label>
       <label className="check">
         <input
           type="checkbox"
@@ -161,6 +187,41 @@ export function SettingsDialog({ open, onClose }: Props) {
           {message.text}
         </p>
       )}
+
+      <h3 className="dialog-subtitle">About</h3>
+      <p className="muted" data-testid="audio-engine">
+        Sound engine:{' '}
+        {audioEngine.synthEngine === 'script-processor'
+          ? 'compatibility mode (this page isn’t on https, so the browser’s AudioWorklet is unavailable)'
+          : audioEngine.synthEngine === 'worklet'
+            ? 'AudioWorklet'
+            : 'starts when you first play a note'}
+        .
+      </p>
+      <div className="reset-confirm">
+        {confirmReset ? (
+          <>
+            <span>Forget every setting and saved tuning on this device?</span>
+            <button
+              type="button"
+              className="button danger"
+              onClick={() => {
+                localStorage.removeItem('fretscape-settings');
+                location.reload();
+              }}
+            >
+              Yes, reset everything
+            </button>
+            <button type="button" className="button" onClick={() => setConfirmReset(false)}>
+              Cancel
+            </button>
+          </>
+        ) : (
+          <button type="button" className="button" onClick={() => setConfirmReset(true)}>
+            Reset all settings…
+          </button>
+        )}
+      </div>
 
       <div className="dialog-actions">
         <button type="button" className="button primary" onClick={onClose}>
