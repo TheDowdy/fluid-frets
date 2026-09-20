@@ -7,6 +7,8 @@ import {
   ADDED,
   ALTERATIONS,
   describeChord,
+  intervalLabel,
+  toneShortLabel,
   EXTENSIONS,
   QUALITIES,
   resolveTones,
@@ -14,7 +16,13 @@ import {
   validateChord,
   type ChordSpec,
 } from './chords';
-import { chromaticName, formatNoteName, pitchClass, type AccidentalPref } from './notes';
+import {
+  chromaticName,
+  formatNoteName,
+  pitchClass,
+  type AccidentalPref,
+  type NoteName,
+} from './notes';
 
 export interface Identified {
   name: string;
@@ -265,4 +273,36 @@ export function libraryStats(): { masks: number; sizes: number[] } {
   const lib = getLibrary();
   const sizes = [...lib.keys()].map(popcount);
   return { masks: lib.size, sizes };
+}
+
+export interface SoundingNote {
+  midi: number;
+  /** Spelled for the chord that was identified (B♭, not A♯, in F). */
+  name: NoteName;
+  /** Interval above the identified root: "R", "3", "♭7"… */
+  interval: string;
+}
+
+/**
+ * The sounding notes, lowest first, spelled and labelled by their function in `reading` (or, when
+ * there is no chord reading, by their distance above the bass note).
+ */
+export function spellSounding(
+  midiNotes: readonly number[],
+  reading: Identified | undefined,
+  pref: AccidentalPref = 'sharp',
+): SoundingNote[] {
+  const sorted = [...midiNotes].sort((a, b) => a - b);
+  if (sorted.length === 0) return [];
+  const rootPc = reading?.rootPc ?? pitchClass(sorted[0] as number);
+  const tones = reading?.spec ? describeChord(reading.spec, pref).tones : [];
+  return sorted.map((midi) => {
+    const pc = pitchClass(midi);
+    const tone = tones.find((t) => t.pc === pc);
+    return {
+      midi,
+      name: tone?.name ?? chromaticName(pc, pref),
+      interval: tone ? toneShortLabel(tone) : intervalLabel(pc - rootPc),
+    };
+  });
 }

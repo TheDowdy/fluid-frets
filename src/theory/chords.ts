@@ -502,6 +502,12 @@ export function describeChord(input: ChordSpec, pref: AccidentalPref = 'sharp'):
   };
 }
 
+/** Interval label for a number of semitones above the root: "R", "♭3", "5", … */
+export function intervalLabel(semitones: number): string {
+  const semis = pitchClass(semitones);
+  return semis === 0 ? 'R' : (CHROMATIC_LABELS[semis] as string);
+}
+
 /** Shorthand used for the interval-label display: "R" for the root, else the interval. */
 export function toneShortLabel(tone: ChordTone): string {
   return tone.kind === 'root' ? 'R' : tone.label;

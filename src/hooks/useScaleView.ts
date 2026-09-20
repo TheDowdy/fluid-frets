@@ -33,12 +33,15 @@ export interface DisplayModel {
   chromatic: boolean;
   /** Text shown in a marker instead of the note name, by pitch class (interval labels). */
   labels: (string | null)[] | null;
-  /** Fingering to ring on the neck (per string: fret, null = muted). */
-  shape: (number | null)[] | null;
+  /**
+   * Fingering to ring on the neck, per string: a fret, null = muted (✕ behind the nut), or
+   * undefined = not part of the fingering (drawn normally).
+   */
+  shape: (number | null | undefined)[] | null;
   legend: {
     items: LegendItem[];
     /** What the three plain marker styles are called. */
-    terms: { tonic: string; scale: string; out: string };
+    terms: { tonic: string | null; scale: string | null; out: string | null };
     /** Explains the ring, e.g. "vi — Am"; null when there's none. */
     overlayLabel: string | null;
   };

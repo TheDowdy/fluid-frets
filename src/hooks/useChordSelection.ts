@@ -1,11 +1,13 @@
 import { useEffect } from 'react';
-import { selectBestVoicing, stopChordPlayback } from '../state/chordActions';
+import { chordContext, selectBestVoicing, stopChordPlayback } from '../state/chordActions';
 import { useStore } from '../state/store';
+import { indexOfShape } from '../theory/voicings';
 
 /**
  * Keeps the fingering on the neck in step with the chord: in chord mode it shows the best voicing
  * whenever the chord, the tuning, the fret count or the voicing rules change (which also discards
- * hand edits made for the previous chord), and outside chord mode it releases the strum shape.
+ * hand edits made for the previous chord), and outside chord mode it releases the chord's shape.
+ * A shape sent over from Identify mode is shown instead, once, in place of the best voicing.
  */
 export function useChordSelection(): void {
   const mode = useStore((s) => s.mode);
@@ -17,7 +19,14 @@ export function useChordSelection(): void {
 
   useEffect(() => {
     if (mode === 'chord') {
-      selectBestVoicing();
+      const { adoptShape, chordSpec, setAdoptShape, setChordShape } = useStore.getState();
+      if (adoptShape && adoptShape.spec === chordSpec) {
+        setAdoptShape(null);
+        const index = indexOfShape(chordContext().voicings, adoptShape.shape);
+        setChordShape(adoptShape.shape, index >= 0 ? index : null);
+      } else {
+        selectBestVoicing();
+      }
     } else {
       stopChordPlayback();
       const { chordShape, setChordShape, setEditingShape } = useStore.getState();

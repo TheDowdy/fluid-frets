@@ -11,6 +11,7 @@ import {
   type ChordDisplaySettings,
   type ChordPlaySettings,
 } from '../theory/chordSettings';
+import { emptySelection, type IdentifyCell } from '../theory/identifySelection';
 import type { AccidentalPref } from '../theory/notes';
 import type { PaletteId } from '../theory/scaleColors';
 import {
@@ -33,8 +34,8 @@ export const MAX_FRETS = 24;
 /** 'auto' = realistic spacing on wide screens, even spacing below 900 px (§4). */
 export type FretSpacing = 'auto' | 'realistic' | 'even';
 
-/** Which panel is open: chromatic exploring, a key/scale overlay, or a chord. Identify follows. */
-export type AppMode = 'explore' | 'scale' | 'chord';
+/** Which panel is open: chromatic exploring, a key/scale overlay, a chord, or identifying a shape. */
+export type AppMode = 'explore' | 'scale' | 'chord' | 'identify';
 
 export interface AppState {
   /** The committed tuning (whole semitones). */
@@ -79,6 +80,13 @@ export interface AppState {
   chordShape: (number | null)[] | null;
   /** Index of `chordShape` in the current voicing list, or null for a hand-edited shape. */
   voicingIndex: number | null;
+  /** The picks made in Identify mode, per string. Not persisted. */
+  identifySel: IdentifyCell[];
+  /**
+   * A fingering to show when the Chords tab next opens instead of its best voicing: set when an
+   * identified shape is sent to chord mode, and used once. `spec` ties it to that chord.
+   */
+  adoptShape: { shape: (number | null)[]; spec: ChordSpec } | null;
   /** In edit mode every tap on a lit chord tone moves that string's note (root taps included). */
   editingShape: boolean;
   /** The note a scale playback is sounding right now (not persisted). */
@@ -112,6 +120,8 @@ export interface AppState {
   /** Shows a fingering; also what a strum gesture sounds. */
   setChordShape: (shape: (number | null)[] | null, voicingIndex: number | null) => void;
   setEditingShape: (editing: boolean) => void;
+  setIdentifySel: (selection: IdentifyCell[]) => void;
+  setAdoptShape: (adopt: { shape: (number | null)[]; spec: ChordSpec } | null) => void;
   setPlayhead: (playhead: { string: number; fret: number } | null) => void;
   setPlaying: (playing: boolean) => void;
 }
@@ -167,6 +177,8 @@ export const useStore = create<AppState>()(
       chordShape: null,
       voicingIndex: null,
       editingShape: false,
+      identifySel: emptySelection(),
+      adoptShape: null,
       playhead: null,
       playing: false,
 
@@ -202,6 +214,8 @@ export const useStore = create<AppState>()(
       setChordShape: (chordShape, voicingIndex) =>
         set({ chordShape, voicingIndex, strumShape: chordShape }),
       setEditingShape: (editingShape) => set({ editingShape }),
+      setIdentifySel: (identifySel) => set({ identifySel }),
+      setAdoptShape: (adoptShape) => set({ adoptShape }),
       setPlayhead: (playhead) => set({ playhead }),
       setPlaying: (playing) => set({ playing }),
     }),
@@ -237,7 +251,8 @@ export const useStore = create<AppState>()(
           ...current,
           ...p,
           tuning,
-          mode: p.mode === 'scale' || p.mode === 'chord' ? p.mode : 'explore',
+          mode:
+            p.mode === 'scale' || p.mode === 'chord' || p.mode === 'identify' ? p.mode : 'explore',
           chordSpec: sanitizeChord(p.chordSpec),
           voicingRules: sanitizeVoicingRules(p.voicingRules),
           chordDisplay: sanitizeChordDisplay(p.chordDisplay),

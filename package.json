@@ -16,7 +16,8 @@
     "check:pegs": "node scripts/pegs-check.mjs",
     "check:strum": "node scripts/strum-check.mjs",
     "check:scales": "node scripts/scales-check.mjs",
-    "check:chords": "node scripts/chords-check.mjs"
+    "check:chords": "node scripts/chords-check.mjs",
+    "check:identify": "node scripts/identify-check.mjs"
   },
   "dependencies": {
     "react": "^18.3.1",

@@ -56,11 +56,15 @@ export function stopChordPlayback(): void {
   chordPlayer.stop();
 }
 
-function playNotes(order: 'strum' | 'arpeggio', overrideDirection?: 'down' | 'up'): void {
-  const { chordShape, chordPlay, tuning, setPlayhead } = useStore.getState();
-  if (!chordShape) return;
+function playNotes(
+  order: 'strum' | 'arpeggio',
+  shape: readonly (number | null)[] | null,
+  overrideDirection?: 'down' | 'up',
+): void {
+  const { chordPlay, tuning, setPlayhead } = useStore.getState();
+  if (!shape) return;
   const direction = overrideDirection ?? chordPlay.direction;
-  const notes = shapeNotes(tuning.strings, chordShape);
+  const notes = shapeNotes(tuning.strings, shape);
   if (direction === 'up') notes.reverse();
   const { gain, brightness } = directionShaping(direction);
   const interval = order === 'strum' ? chordPlay.speedMs / 1000 : ARPEGGIO_SECONDS;
@@ -84,14 +88,22 @@ function playNotes(order: 'strum' | 'arpeggio', overrideDirection?: 'down' | 'up
 /** Time between notes of an arpeggio. */
 const ARPEGGIO_SECONDS = 0.28;
 
-/** Strums the shown fingering with the chosen direction and speed. Muted strings stay silent. */
-export function strumChord(direction?: 'down' | 'up'): void {
-  playNotes('strum', direction);
+/** Strums any fingering with the chosen direction and speed. Muted strings stay silent. */
+export function strumFingering(
+  shape: readonly (number | null)[] | null,
+  direction?: 'down' | 'up',
+): void {
+  playNotes('strum', shape, direction);
 }
 
-/** Plays the shown fingering one note at a time. */
+/** Strums the chord's shown fingering. */
+export function strumChord(direction?: 'down' | 'up'): void {
+  playNotes('strum', useStore.getState().chordShape, direction);
+}
+
+/** Plays the chord's shown fingering one note at a time. */
 export function arpeggiateChord(): void {
-  playNotes('arpeggio');
+  playNotes('arpeggio', useStore.getState().chordShape);
 }
 
 /**
@@ -150,9 +162,4 @@ export function tapChordNote(string: number, fret: number): boolean {
   commit(next);
   playFret(string, fret);
   return true;
-}
-
-/** A tap on a fret position: the chord editor in chord mode, otherwise just the note. */
-export function tapFret(string: number, fret: number): void {
-  if (!tapChordNote(string, fret)) playFret(string, fret);
 }

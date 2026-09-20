@@ -62,8 +62,8 @@ const StringMarkers = memo(function StringMarkers({
     hideOutOfScale: display.hideOutOfScale,
     chromatic: display.chromatic,
   };
-  // undefined: no fingering to show; null: this string is muted; number: the fret being played.
-  const shapeFret = display?.shape ? (display.shape[string] ?? null) : undefined;
+  // undefined: string not in the fingering (drawn normally); null: muted; number: the fret played.
+  const shapeFret = display?.shape ? display.shape[string] : undefined;
 
   return (
     <g>

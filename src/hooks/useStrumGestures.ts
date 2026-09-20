@@ -1,6 +1,6 @@
 import { useMemo, useRef } from 'react';
 import { stringY } from '../components/Fretboard/geometry';
-import { tapFret } from '../state/chordActions';
+import { tapFret } from '../state/tap';
 import { playStrumHit } from '../state/playing';
 import { StrumTracker } from '../theory/strum';
 import { STRING_COUNT } from '../theory/tunings';

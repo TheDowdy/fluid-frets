@@ -87,18 +87,24 @@ export function Legend() {
         </ul>
       ) : (
         <ul className="legend-list">
-          <li>
-            <Swatch style={plain('tonic', 0)} />
-            <span>{terms.tonic}</span>
-          </li>
-          <li>
-            <Swatch style={plain('scale', 7)} />
-            <span>{terms.scale}</span>
-          </li>
-          <li>
-            <Swatch style={plain('out', 1)} />
-            <span>{display.hideOutOfScale ? `${terms.out} (hidden)` : terms.out}</span>
-          </li>
+          {terms.tonic !== null && (
+            <li>
+              <Swatch style={plain('tonic', 0)} />
+              <span>{terms.tonic}</span>
+            </li>
+          )}
+          {terms.scale !== null && (
+            <li>
+              <Swatch style={plain('scale', 7)} />
+              <span>{terms.scale}</span>
+            </li>
+          )}
+          {terms.out !== null && (
+            <li>
+              <Swatch style={plain('out', 1)} />
+              <span>{display.hideOutOfScale ? `${terms.out} (hidden)` : terms.out}</span>
+            </li>
+          )}
         </ul>
       )}
       {overlayLabel && (

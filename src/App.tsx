@@ -5,11 +5,13 @@ import { Legend } from './components/Panels/Legend';
 import { Toolbar } from './components/Toolbar/Toolbar';
 import { useAudioSync } from './hooks/useAudioSync';
 import { useChordSelection } from './hooks/useChordSelection';
+import { useIdentifySync } from './hooks/useIdentifySync';
 import { useAudioUnlock } from './hooks/useAudioUnlock';
 
 export default function App() {
   useAudioSync();
   useChordSelection();
+  useIdentifySync();
   useAudioUnlock();
   return (
     <div className="app">

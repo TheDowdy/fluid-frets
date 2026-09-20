@@ -571,3 +571,16 @@ body {
   width: 73px;
   height: 84px;
 }
+
+/* Identify tab (Phase 8) */
+.identify-result {
+  margin-top: 0.5rem;
+}
+.identify-result p {
+  margin: 0.15rem 0;
+}
+.identify-shape {
+  display: flex;
+  gap: 0.75rem;
+  align-items: baseline;
+}
