@@ -1,5 +1,6 @@
 import { useMemo, useRef } from 'react';
 import { useElementWidth } from '../../hooks/useElementWidth';
+import { useScaleView } from '../../hooks/useScaleView';
 import { useStrumGestures } from '../../hooks/useStrumGestures';
 import { useStore } from '../../state/store';
 import { chromaticSpelling } from '../../theory/notes';
@@ -35,7 +36,10 @@ export function Fretboard() {
   const wires = useMemo(() => fretWireXs(fretCount, realistic), [fretCount, realistic]);
   const centres = useMemo(() => fretCentreXs(wires), [wires]);
   const spaces = useMemo(() => fretSpaceWidths(wires), [wires]);
-  const spelling = useMemo(() => chromaticSpelling(pref), [pref]);
+  const scale = useScaleView();
+  const exploreSpelling = useMemo(() => chromaticSpelling(pref), [pref]);
+  // In a key, notes are spelled for that key (B♭ in F major); otherwise by the ♯/♭ preference.
+  const spelling = scale?.spelling ?? exploreSpelling;
 
   const strumHandlers = useStrumGestures();
 
@@ -66,6 +70,7 @@ export function Fretboard() {
             centres={centres}
             spaces={spaces}
             leftHanded={leftHanded}
+            scale={scale}
           />
           {Array.from({ length: STRING_COUNT }, (_, i) => (
             <TuningPeg key={i} string={i} leftHanded={leftHanded} />

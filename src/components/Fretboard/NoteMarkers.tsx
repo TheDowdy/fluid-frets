@@ -1,4 +1,5 @@
 import { memo, useEffect, useRef } from 'react';
+import type { ScaleViewModel } from '../../hooks/useScaleView';
 import { onPluck } from '../../state/pluckEvents';
 import { useStore } from '../../state/store';
 import { edgeOpacity, slidingNotes } from '../../theory/fretboard';
@@ -11,6 +12,7 @@ import {
   stringY,
   STRING_COUNT,
 } from './geometry';
+import { markerStyle, type ScaleStyleOptions } from './markerStyle';
 import { skin } from './skin';
 
 interface StringProps {
@@ -21,6 +23,8 @@ interface StringProps {
   spaces: readonly number[];
   spelling: Spelling;
   leftHanded: boolean;
+  /** Null in explore mode. */
+  scale: ScaleViewModel | null;
 }
 
 /** Font size that keeps 1–3 character labels (F, F♯, F𝄪) inside a marker of radius r. */
@@ -29,10 +33,15 @@ function labelSize(r: number, label: string): number {
   return r * (chars === 1 ? 1.15 : chars === 2 ? 0.95 : 0.8);
 }
 
+/** Gap between a marker and its overlay ring, and the ring's line width. */
+const RING_GAP = 2.4;
+const RING_WIDTH = 2.4;
+
 /**
  * All the note markers of one string. Each is placed from its pitch (fret = midi − string
  * pitch), so when the string's live pitch changes the labels slide along the neck. It selects
- * only its own string's pitch, so a peg drag re-renders one string, not six.
+ * only its own string's pitch, so a peg drag re-renders one string, not six. Scale mode styles
+ * each marker by its pitch class, so notes keep their role as they slide.
  */
 const StringMarkers = memo(function StringMarkers({
   string,
@@ -41,46 +50,97 @@ const StringMarkers = memo(function StringMarkers({
   spaces,
   spelling,
   leftHanded,
+  scale,
 }: StringProps) {
   const pitch = useStore((s) => s.liveTuning[string]) ?? 40;
+  // The fret being sounded by scale playback on this string, if any (one string re-renders per step).
+  const playheadFret = useStore((s) => (s.playhead?.string === string ? s.playhead.fret : null));
   const cy = stringY(string);
+  const styleOptions: ScaleStyleOptions | null = scale && {
+    colourMode: scale.colourMode,
+    palette: scale.palette,
+    hideOutOfScale: scale.hideOutOfScale,
+    chromatic: !!scale.def.chromatic,
+  };
 
   return (
     <g>
       {slidingNotes(pitch, fretCount).map(({ midi, fret }) => {
-        const opacity = edgeOpacity(fret, fretCount);
-        if (opacity <= 0) return null;
+        const edge = edgeOpacity(fret, fretCount);
+        if (edge <= 0) return null;
+        const view = scale?.views[pitchClass(midi)];
+        const style = markerStyle(view, styleOptions);
+        if (!style.visible) return null;
         const label = formatNoteName(spelling[pitchClass(midi)] as (typeof spelling)[number]);
-        const r = markerRadius(interpolateClamped(spaces, fret));
+        const r = markerRadius(interpolateClamped(spaces, fret)) * style.scale;
         const cx = mirrorX(interpolateAtFret(centres, fret), leftHanded);
         // Only a marker sitting exactly on a fret is a tap target (always true at rest).
         const onFret = Math.abs(fret - Math.round(fret)) < 1e-6 && fret >= 0 && fret <= fretCount;
+        const sounding = onFret && playheadFret === Math.round(fret);
         return (
           <g
             key={midi}
-            opacity={opacity}
+            opacity={edge}
             data-string={onFret ? string : undefined}
             data-fret={onFret ? Math.round(fret) : undefined}
             data-midi={midi}
+            data-role={view?.role}
+            data-degree={view?.degree?.label}
+            data-overlay={view?.overlay ? '' : undefined}
+            data-sounding={sounding ? '' : undefined}
             pointerEvents={onFret ? undefined : 'none'}
           >
-            <circle
-              cx={cx}
-              cy={cy}
-              r={r}
-              fill={skin.markerFill}
-              stroke="rgba(0,0,0,0.5)"
-              style={{ transformBox: 'fill-box', transformOrigin: 'center' }}
-            />
-            <text
-              x={cx}
-              y={cy}
-              fontSize={labelSize(r, label)}
-              fontWeight={600}
-              fill={skin.markerText}
-            >
-              {label}
-            </text>
+            {style.ring && (
+              <g fill="none" pointerEvents="none">
+                <circle
+                  cx={cx}
+                  cy={cy}
+                  r={r + RING_GAP}
+                  stroke={skin.ringHalo}
+                  strokeWidth={RING_WIDTH + 2.2}
+                />
+                <circle
+                  cx={cx}
+                  cy={cy}
+                  r={r + RING_GAP}
+                  stroke={skin.ring}
+                  strokeWidth={RING_WIDTH}
+                />
+              </g>
+            )}
+            <g opacity={style.opacity}>
+              <circle
+                className="marker-dot"
+                cx={cx}
+                cy={cy}
+                r={r}
+                fill={style.fill}
+                stroke={sounding ? skin.playhead : style.stroke}
+                strokeWidth={sounding ? 3.6 : style.strokeWidth}
+                style={{ transformBox: 'fill-box', transformOrigin: 'center' }}
+              />
+              {style.dashed && (
+                <circle
+                  cx={cx}
+                  cy={cy}
+                  r={r * 0.68}
+                  fill="none"
+                  stroke={style.text}
+                  strokeWidth={1.3}
+                  strokeDasharray="2.4 2"
+                  pointerEvents="none"
+                />
+              )}
+              <text
+                x={cx}
+                y={cy}
+                fontSize={labelSize(r, label)}
+                fontWeight={sounding ? 800 : 600}
+                fill={style.text}
+              >
+                {label}
+              </text>
+            </g>
           </g>
         );
       })}
@@ -94,19 +154,20 @@ interface Props {
   spaces: readonly number[];
   spelling: Spelling;
   leftHanded: boolean;
+  scale: ScaleViewModel | null;
 }
 
 /** A circle + label in every fret space, and one per string behind the nut for the open note. */
 export function NoteMarkers(props: Props) {
   const ref = useRef<SVGGElement>(null);
 
-  // Pulse the marker of any note that sounds, whether tapped or strummed.
+  // Pulse the marker of any note that sounds, whether tapped, strummed or played back.
   useEffect(
     () =>
       onPluck(({ string, fret }) => {
         if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
         ref.current
-          ?.querySelector(`[data-string="${string}"][data-fret="${fret}"] circle`)
+          ?.querySelector(`[data-string="${string}"][data-fret="${fret}"] .marker-dot`)
           ?.animate(
             [{ transform: 'scale(1)' }, { transform: 'scale(1.3)' }, { transform: 'scale(1)' }],
             { duration: 380, easing: 'ease-out' },
@@ -115,7 +176,6 @@ export function NoteMarkers(props: Props) {
     [],
   );
 
-  const { fretCount, centres, spaces, spelling, leftHanded } = props;
   return (
     <g
       ref={ref}
@@ -125,15 +185,7 @@ export function NoteMarkers(props: Props) {
       className="markers"
     >
       {Array.from({ length: STRING_COUNT }, (_, string) => (
-        <StringMarkers
-          key={string}
-          string={string}
-          fretCount={fretCount}
-          centres={centres}
-          spaces={spaces}
-          spelling={spelling}
-          leftHanded={leftHanded}
-        />
+        <StringMarkers key={string} string={string} {...props} />
       ))}
     </g>
   );

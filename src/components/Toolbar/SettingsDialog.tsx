@@ -31,7 +31,9 @@ export function SettingsDialog({ open, onClose }: Props) {
   const strum = useStore((s) => s.strumOnTuningChange);
   const saved = useStore((s) => s.savedTunings);
   const pref = useStore((s) => s.accidentalPref);
-  const { setUnlimitedRange, setStrumOnTuningChange, setSavedTunings } = useStore.getState();
+  const palette = useStore((s) => s.palette);
+  const { setUnlimitedRange, setStrumOnTuningChange, setSavedTunings, setPalette } =
+    useStore.getState();
   const [message, setMessage] = useState<{ text: string; error: boolean } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -87,6 +89,14 @@ export function SettingsDialog({ open, onClose }: Props) {
           onChange={(e) => setStrumOnTuningChange(e.target.checked)}
         />
         <span>Strum the open strings when a tuning is chosen</span>
+      </label>
+      <label className="check">
+        <input
+          type="checkbox"
+          checked={palette === 'colourblind'}
+          onChange={(e) => setPalette(e.target.checked ? 'colourblind' : 'rainbow')}
+        />
+        <span>Colour-blind-friendly scale colours</span>
       </label>
 
       <h3 className="dialog-subtitle">My tunings</h3>

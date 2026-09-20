@@ -2,6 +2,17 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { SoundPresetId } from '../audio/instrument';
 import type { AccidentalPref } from '../theory/notes';
+import type { PaletteId } from '../theory/scaleColors';
+import {
+  DEFAULT_PALETTE,
+  DEFAULT_PLAYBACK,
+  DEFAULT_SCALE_SETTINGS,
+  sanitizePalette,
+  sanitizePlayback,
+  sanitizeScaleSettings,
+  type PlaybackSettings,
+  type ScaleSettings,
+} from '../theory/scaleSettings';
 import { sanitizeSaved, sanitizeTuning } from '../theory/savedTunings';
 import { STANDARD_TUNING, type Tuning } from '../theory/tunings';
 
@@ -10,6 +21,9 @@ export const MAX_FRETS = 24;
 
 /** 'auto' = realistic spacing on wide screens, even spacing below 900 px (§4). */
 export type FretSpacing = 'auto' | 'realistic' | 'even';
+
+/** Which panel is open: chromatic exploring, or a key/scale overlay. Chords and Identify follow. */
+export type AppMode = 'explore' | 'scale';
 
 export interface AppState {
   /** The committed tuning (whole semitones). */
@@ -38,6 +52,14 @@ export interface AppState {
    * Not persisted.
    */
   strumShape: (number | null)[] | null;
+  mode: AppMode;
+  scaleSettings: ScaleSettings;
+  /** Colours used by scale colour mode. */
+  palette: PaletteId;
+  playback: PlaybackSettings;
+  /** The note a scale playback is sounding right now (not persisted). */
+  playhead: { string: number; fret: number } | null;
+  playing: boolean;
 
   /** Sets the committed tuning without touching `liveTuning` (callers animate it). */
   setTuning: (tuning: Tuning) => void;
@@ -55,6 +77,12 @@ export interface AppState {
   setVolume: (volume: number) => void;
   setMuted: (muted: boolean) => void;
   setStrumShape: (shape: (number | null)[] | null) => void;
+  setMode: (mode: AppMode) => void;
+  setScaleSettings: (patch: Partial<ScaleSettings>) => void;
+  setPalette: (palette: PaletteId) => void;
+  setPlayback: (patch: Partial<PlaybackSettings>) => void;
+  setPlayhead: (playhead: { string: number; fret: number } | null) => void;
+  setPlaying: (playing: boolean) => void;
 }
 
 /** The subset written to localStorage. Transient drawing state is deliberately left out. */
@@ -71,6 +99,10 @@ type Persisted = Pick<
   | 'soundPreset'
   | 'volume'
   | 'muted'
+  | 'mode'
+  | 'scaleSettings'
+  | 'palette'
+  | 'playback'
 >;
 
 export const useStore = create<AppState>()(
@@ -89,6 +121,12 @@ export const useStore = create<AppState>()(
       volume: 0.8,
       muted: false,
       strumShape: null,
+      mode: 'explore',
+      scaleSettings: DEFAULT_SCALE_SETTINGS,
+      palette: DEFAULT_PALETTE,
+      playback: DEFAULT_PLAYBACK,
+      playhead: null,
+      playing: false,
 
       setTuning: (tuning) => set({ tuning }),
       jumpToTuning: (tuning) => set({ tuning, liveTuning: [...tuning.strings] }),
@@ -110,6 +148,13 @@ export const useStore = create<AppState>()(
       setVolume: (volume) => set({ volume: Math.min(1, Math.max(0, volume)) }),
       setMuted: (muted) => set({ muted }),
       setStrumShape: (strumShape) => set({ strumShape }),
+      setMode: (mode) => set({ mode }),
+      setScaleSettings: (patch) =>
+        set((s) => ({ scaleSettings: { ...s.scaleSettings, ...patch } })),
+      setPalette: (palette) => set({ palette }),
+      setPlayback: (patch) => set((s) => ({ playback: { ...s.playback, ...patch } })),
+      setPlayhead: (playhead) => set({ playhead }),
+      setPlaying: (playing) => set({ playing }),
     }),
     {
       name: 'fretscape-settings',
@@ -126,6 +171,10 @@ export const useStore = create<AppState>()(
         soundPreset: s.soundPreset,
         volume: s.volume,
         muted: s.muted,
+        mode: s.mode,
+        scaleSettings: s.scaleSettings,
+        palette: s.palette,
+        playback: s.playback,
       }),
       // Never trust storage: validate the tuning data, and rebuild the drawn tuning from it.
       merge: (persisted, current) => {
@@ -135,6 +184,10 @@ export const useStore = create<AppState>()(
           ...current,
           ...p,
           tuning,
+          mode: p.mode === 'scale' ? 'scale' : 'explore',
+          scaleSettings: sanitizeScaleSettings(p.scaleSettings),
+          palette: sanitizePalette(p.palette),
+          playback: sanitizePlayback(p.playback),
           liveTuning: [...tuning.strings],
           savedTunings: sanitizeSaved(p.savedTunings),
           fretCount: Math.min(
