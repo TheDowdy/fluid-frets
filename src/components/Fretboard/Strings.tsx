@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { onPluck } from '../../state/pluckEvents';
 import { nutX, stringY, totalWidth } from './geometry';
-import { skin } from './skin';
+import type { ResolvedSkin } from './guitarSkins';
 
 /** A plucked string swings at this (visible, not audible) rate and dies away exponentially. */
 const WOBBLE_HZ = 13;
@@ -14,10 +14,14 @@ function prefersReducedMotion(): boolean {
 }
 
 /** The three layers a string is drawn with: shadow, string, and (wound strings) a dashed overlay. */
-function StringLayers({ index, d }: { index: number; d?: string }) {
+function StringLayers({ index, d, skin }: { index: number; d?: string; skin: ResolvedSkin }) {
+  const strings = skin.model.strings;
   const y = stringY(index);
-  const width = skin.stringWidth[index];
-  const wound = skin.wound[index];
+  const width = strings.widths[index];
+  const wound = strings.isWound[index];
+  // Pale nickel and nylon would disappear against a maple board, so they are drawn darker there.
+  const plainColour = skin.lightBoard ? '#7b8188' : strings.plain;
+  const woundColour = skin.lightBoard ? '#666c72' : strings.wound;
   const shape = (dy: number, stroke: string, dash?: string) =>
     d ? (
       <path d={d} transform={`translate(0 ${dy})`} stroke={stroke} strokeDasharray={dash} />
@@ -34,8 +38,10 @@ function StringLayers({ index, d }: { index: number; d?: string }) {
   return (
     <g strokeWidth={width} fill="none">
       {shape(1.2, 'rgba(0,0,0,0.35)')}
-      {shape(0, wound ? skin.stringWound : skin.stringPlain)}
-      {wound && shape(0, 'rgba(0,0,0,0.35)', '1.1 1.1')}
+      <g opacity={wound ? 1 : strings.plainOpacity}>
+        {shape(0, wound ? woundColour : plainColour)}
+      </g>
+      {wound && strings.windPattern && shape(0, 'rgba(0,0,0,0.35)', '1.1 1.1')}
     </g>
   );
 }
@@ -45,7 +51,7 @@ function StringLayers({ index, d }: { index: number; d?: string }) {
  * wobble decays with the sound. The path is driven straight from requestAnimationFrame so a
  * strum doesn't cost six React renders per frame.
  */
-function StringLine({ index }: { index: number }) {
+function StringLine({ index, skin }: { index: number; skin: ResolvedSkin }) {
   const restRef = useRef<SVGGElement>(null);
   const wobbleRef = useRef<SVGGElement>(null);
 
@@ -98,21 +104,21 @@ function StringLine({ index }: { index: number }) {
   return (
     <g>
       <g ref={restRef}>
-        <StringLayers index={index} />
+        <StringLayers index={index} skin={skin} />
       </g>
       <g ref={wobbleRef} data-wobble={index} style={{ display: 'none' }}>
-        <StringLayers index={index} d={`M${nutX} ${stringY(index)}`} />
+        <StringLayers index={index} d={`M${nutX} ${stringY(index)}`} skin={skin} />
       </g>
     </g>
   );
 }
 
 /** Six strings from the nut to the end of the board; 4–6 get a wound look. */
-export function Strings() {
+export function Strings({ skin }: { skin: ResolvedSkin }) {
   return (
     <g>
-      {skin.stringWidth.map((_, i) => (
-        <StringLine key={i} index={i} />
+      {skin.model.strings.widths.map((_, i) => (
+        <StringLine key={i} index={i} skin={skin} />
       ))}
     </g>
   );

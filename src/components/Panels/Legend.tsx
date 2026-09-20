@@ -6,7 +6,7 @@ import { skin } from '../Fretboard/skin';
 
 /** Wood behind each swatch, so it looks as it does on the neck whatever the page theme. */
 function SwatchBacking() {
-  return <rect x="-15" y="-15" width="30" height="30" rx="7" fill={skin.boardWood[0]} />;
+  return <rect x="-15" y="-15" width="30" height="30" rx="7" fill={skin.legendBacking} />;
 }
 
 /** A small marker drawn exactly as it appears on the neck. */

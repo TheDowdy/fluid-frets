@@ -1,6 +1,14 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { SoundPresetId } from '../audio/instrument';
+import {
+  DEFAULT_MODEL_ID,
+  isGuitarModelId,
+  NO_CUSTOMISE,
+  sanitizeCustomise,
+  type Customise,
+  type GuitarModelId,
+} from '../components/Fretboard/guitarSkins';
 import { DEFAULT_CHORD, normalizeChord, sanitizeChord, type ChordSpec } from '../theory/chords';
 import {
   DEFAULT_CHORD_DISPLAY,
@@ -55,6 +63,14 @@ export interface AppState {
   /** Soft strum of the new open strings after choosing a tuning from the list (§6). */
   strumOnTuningChange: boolean;
   soundPreset: SoundPresetId;
+  /** Which guitar is drawn around the notes (§4a). */
+  guitarModel: GuitarModelId;
+  /** The user's changes to the model's wood, inlays and finish. */
+  customise: Customise;
+  /** Choosing a guitar also picks its natural sound (the user can still change it after). */
+  matchSound: boolean;
+  /** Set once the user picks a fret count themselves; a guitar's default then stops applying. */
+  fretCountUserSet: boolean;
   /** 0–1 slider position (perceptual curve is applied by the audio engine). */
   volume: number;
   muted: boolean;
@@ -106,6 +122,10 @@ export interface AppState {
   setUnlimitedRange: (unlimited: boolean) => void;
   setStrumOnTuningChange: (strum: boolean) => void;
   setSoundPreset: (id: SoundPresetId) => void;
+  setGuitarModel: (id: GuitarModelId) => void;
+  setCustomise: (patch: Partial<Customise>) => void;
+  setMatchSound: (match: boolean) => void;
+  setFretCountUserSet: (set: boolean) => void;
   setVolume: (volume: number) => void;
   setMuted: (muted: boolean) => void;
   setStrumShape: (shape: (number | null)[] | null) => void;
@@ -138,6 +158,10 @@ type Persisted = Pick<
   | 'unlimitedRange'
   | 'strumOnTuningChange'
   | 'soundPreset'
+  | 'guitarModel'
+  | 'customise'
+  | 'matchSound'
+  | 'fretCountUserSet'
   | 'volume'
   | 'muted'
   | 'mode'
@@ -163,6 +187,10 @@ export const useStore = create<AppState>()(
       unlimitedRange: false,
       strumOnTuningChange: true,
       soundPreset: 'acoustic',
+      guitarModel: DEFAULT_MODEL_ID,
+      customise: NO_CUSTOMISE,
+      matchSound: true,
+      fretCountUserSet: false,
       volume: 0.8,
       muted: false,
       strumShape: null,
@@ -199,6 +227,10 @@ export const useStore = create<AppState>()(
       setUnlimitedRange: (unlimitedRange) => set({ unlimitedRange }),
       setStrumOnTuningChange: (strumOnTuningChange) => set({ strumOnTuningChange }),
       setSoundPreset: (soundPreset) => set({ soundPreset }),
+      setGuitarModel: (guitarModel) => set({ guitarModel }),
+      setCustomise: (patch) => set((s) => ({ customise: { ...s.customise, ...patch } })),
+      setMatchSound: (matchSound) => set({ matchSound }),
+      setFretCountUserSet: (fretCountUserSet) => set({ fretCountUserSet }),
       setVolume: (volume) => set({ volume: Math.min(1, Math.max(0, volume)) }),
       setMuted: (muted) => set({ muted }),
       setStrumShape: (strumShape) => set({ strumShape }),
@@ -232,6 +264,10 @@ export const useStore = create<AppState>()(
         unlimitedRange: s.unlimitedRange,
         strumOnTuningChange: s.strumOnTuningChange,
         soundPreset: s.soundPreset,
+        guitarModel: s.guitarModel,
+        customise: s.customise,
+        matchSound: s.matchSound,
+        fretCountUserSet: s.fretCountUserSet,
         volume: s.volume,
         muted: s.muted,
         mode: s.mode,
@@ -251,6 +287,10 @@ export const useStore = create<AppState>()(
           ...current,
           ...p,
           tuning,
+          guitarModel: isGuitarModelId(p.guitarModel) ? p.guitarModel : DEFAULT_MODEL_ID,
+          customise: sanitizeCustomise(p.customise),
+          matchSound: p.matchSound !== false,
+          fretCountUserSet: p.fretCountUserSet === true,
           mode:
             p.mode === 'scale' || p.mode === 'chord' || p.mode === 'identify' ? p.mode : 'explore',
           chordSpec: sanitizeChord(p.chordSpec),

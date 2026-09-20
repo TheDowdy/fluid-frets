@@ -17,7 +17,8 @@
     "check:strum": "node scripts/strum-check.mjs",
     "check:scales": "node scripts/scales-check.mjs",
     "check:chords": "node scripts/chords-check.mjs",
-    "check:identify": "node scripts/identify-check.mjs"
+    "check:identify": "node scripts/identify-check.mjs",
+    "check:guitars": "node scripts/guitars-check.mjs"
   },
   "dependencies": {
     "react": "^18.3.1",

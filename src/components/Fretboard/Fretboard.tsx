@@ -1,6 +1,7 @@
 import { useMemo, useRef } from 'react';
 import { useElementWidth } from '../../hooks/useElementWidth';
 import { useDisplay } from '../../hooks/useDisplay';
+import { useGuitarSkin } from '../../hooks/useGuitarSkin';
 import { useStrumGestures } from '../../hooks/useStrumGestures';
 import { useStore } from '../../state/store';
 import { chromaticSpelling } from '../../theory/notes';
@@ -37,6 +38,7 @@ export function Fretboard() {
   const centres = useMemo(() => fretCentreXs(wires), [wires]);
   const spaces = useMemo(() => fretSpaceWidths(wires), [wires]);
   const display = useDisplay();
+  const guitar = useGuitarSkin();
   const exploreSpelling = useMemo(() => chromaticSpelling(pref), [pref]);
   // In a key or chord, notes are spelled for it (B♭ in F major); otherwise by the ♯/♭ preference.
   const spelling = display?.spelling ?? exploreSpelling;
@@ -59,10 +61,10 @@ export function Fretboard() {
           {...strumHandlers}
         >
           <g transform={flip}>
-            <Neck />
-            <Inlays fretCount={fretCount} centres={centres} spaces={spaces} />
-            <Frets wires={wires} />
-            <Strings />
+            <Neck skin={guitar} />
+            <Inlays fretCount={fretCount} centres={centres} spaces={spaces} skin={guitar} />
+            <Frets wires={wires} skin={guitar} />
+            <Strings skin={guitar} />
           </g>
           <NoteMarkers
             fretCount={fretCount}
@@ -71,6 +73,7 @@ export function Fretboard() {
             spaces={spaces}
             leftHanded={leftHanded}
             display={display}
+            lightBoard={guitar.lightBoard}
           />
           {Array.from({ length: STRING_COUNT }, (_, i) => (
             <TuningPeg key={i} string={i} leftHanded={leftHanded} />

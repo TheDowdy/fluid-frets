@@ -25,6 +25,8 @@ interface StringProps {
   leftHanded: boolean;
   /** Null in explore mode. */
   display: DisplayModel | null;
+  /** Pale board (maple): dark outlines for out-of-key notes. */
+  lightBoard: boolean;
 }
 
 /** Font size that keeps 1–3 character labels (F, F♯, F𝄪) inside a marker of radius r. */
@@ -51,6 +53,7 @@ const StringMarkers = memo(function StringMarkers({
   spelling,
   leftHanded,
   display,
+  lightBoard,
 }: StringProps) {
   const pitch = useStore((s) => s.liveTuning[string]) ?? 40;
   // The fret being sounded by scale playback on this string, if any (one string re-renders per step).
@@ -77,7 +80,7 @@ const StringMarkers = memo(function StringMarkers({
         const inShape = onFret && shapeFret === Math.round(fret);
         const baseView = display?.views[pc];
         const view = inShape && baseView ? { ...baseView, overlay: true } : baseView;
-        const style = markerStyle(view, styleOptions);
+        const style = markerStyle(view, styleOptions, lightBoard);
         if (!style.visible) return null;
         const label =
           display?.labels?.[pc] ?? formatNoteName(spelling[pc] as (typeof spelling)[number]);
@@ -181,6 +184,8 @@ interface Props {
   spelling: Spelling;
   leftHanded: boolean;
   display: DisplayModel | null;
+  /** Pale board (maple): dark outlines for out-of-key notes. */
+  lightBoard: boolean;
 }
 
 /** A circle + label in every fret space, and one per string behind the nut for the open note. */

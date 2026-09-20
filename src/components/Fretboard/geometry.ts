@@ -7,14 +7,16 @@ export const STRING_COUNT = 6;
 
 /** Fixed layout constants (viewBox units). */
 export const LAYOUT = {
-  /** Headstock sliver left of the nut; pegs (Phase 4) and open-string markers live here. */
-  headstockWidth: 120,
+  /** Headstock sliver left of the nut: a strip of its outline, the pegs, then the open-note slot. */
+  headstockWidth: 150,
   /** Width of the slot behind the nut holding each open-string marker. */
   openSlotWidth: 44,
   /** Nut → last fret wire. */
   neckLength: 1200,
-  /** Fretboard extends slightly past the last fret wire. */
-  tailWidth: 16,
+  /** Past the last fret wire: the end of the board, then a hint of the guitar's body. */
+  tailWidth: 100,
+  /** How far the fretboard itself runs beyond the last fret wire. */
+  boardOverhang: 12,
   stringGap: 36,
   /** Fretboard edge to the outermost string. */
   edgeMargin: 22,
@@ -123,7 +125,7 @@ export function interpolateClamped(values: readonly number[], fret: number): num
 
 /** Layout of the tuning peg for each string (drawn in the headstock, left of the open-note slot). */
 export const PEG = {
-  x: 6,
+  x: LAYOUT.headstockWidth - LAYOUT.openSlotWidth - 70,
   width: 70,
   height: LAYOUT.stringGap - 3,
 } as const;

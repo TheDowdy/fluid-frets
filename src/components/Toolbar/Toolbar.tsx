@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { MAX_FRETS, MIN_FRETS, useStore, type FretSpacing } from '../../state/store';
+import { chooseFretCount } from '../../state/guitarActions';
 import { selectTuning } from '../../state/tuningActions';
 import { midiToName } from '../../theory/notes';
 import { CUSTOM_ID } from '../../theory/savedTunings';
 import { getPreset, PRESET_GROUPS } from '../../theory/tunings';
+import { GuitarControls } from './GuitarControls';
 import { SaveTuningDialog } from './SaveTuningDialog';
 import { SettingsDialog } from './SettingsDialog';
 import { SoundControls } from './SoundControls';
@@ -17,7 +19,7 @@ export function Toolbar() {
   const pref = useStore((s) => s.accidentalPref);
   const leftHanded = useStore((s) => s.leftHanded);
   const fretSpacing = useStore((s) => s.fretSpacing);
-  const { setFretCount, setAccidentalPref, setLeftHanded, setFretSpacing } = useStore.getState();
+  const { setAccidentalPref, setLeftHanded, setFretSpacing } = useStore.getState();
   const [saving, setSaving] = useState(false);
   const [settings, setSettings] = useState(false);
 
@@ -68,7 +70,7 @@ export function Toolbar() {
 
       <label className="field">
         <span>Frets</span>
-        <select value={fretCount} onChange={(e) => setFretCount(Number(e.target.value))}>
+        <select value={fretCount} onChange={(e) => chooseFretCount(Number(e.target.value))}>
           {fretOptions.map((n) => (
             <option key={n} value={n}>
               {n}
@@ -76,6 +78,8 @@ export function Toolbar() {
           ))}
         </select>
       </label>
+
+      <GuitarControls />
 
       <label className="field">
         <span>Spacing</span>

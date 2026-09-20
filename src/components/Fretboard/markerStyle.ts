@@ -55,7 +55,21 @@ export function noteColour(view: PitchView, o: Pick<ScaleStyleOptions, 'palette'
  * How a marker is drawn. With no `view` (explore mode) every note looks the same; in scale mode
  * the tonic, in-scale and out-of-scale notes differ, and colour mode fills by degree (§10).
  */
-export function markerStyle(view: PitchView | undefined, o: ScaleStyleOptions | null): MarkerStyle {
+export function markerStyle(
+  view: PitchView | undefined,
+  o: ScaleStyleOptions | null,
+  lightBoard = false,
+): MarkerStyle {
+  const style = baseMarkerStyle(view, o);
+  if (!lightBoard || !style.visible) return style;
+  // On a pale board the cream outlines and white rings would vanish: outline everything darkly.
+  const dark = skin.markerFillOnLight;
+  return style.fill === 'transparent'
+    ? { ...style, stroke: dark, text: dark }
+    : { ...style, stroke: dark, strokeWidth: Math.max(style.strokeWidth, 1.5) };
+}
+
+function baseMarkerStyle(view: PitchView | undefined, o: ScaleStyleOptions | null): MarkerStyle {
   if (!view || !o) return PLAIN_MARKER;
   const ring = view.overlay;
   const shrink = ring ? RING_SHRINK : 1;

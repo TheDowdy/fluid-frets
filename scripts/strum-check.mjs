@@ -171,7 +171,8 @@ await reset();
 {
   const box = await marker(1, 3).boundingBox();
   const mx = box.x + box.width / 2;
-  const my = box.y + box.height / 2;
+  // Start a few pixels past the string's line, in the direction of the drag, so that string isn't crossed.
+  const my = box.y + box.height / 2 - 5;
   await mouseDrag(mx, my, b.ys[4] - b.gap * 0.6, { steps: 8, stepMs: 8 });
   p = await plucks();
   check(
